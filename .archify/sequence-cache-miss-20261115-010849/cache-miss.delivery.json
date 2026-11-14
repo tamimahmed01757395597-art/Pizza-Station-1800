@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "2e0f8ffb-91b9-4833-b408-0717c934e058",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "D:\\Pizza Station 1800\\.archify\\sequence-cache-miss-20261115-010849\\candidate.json",
+  "output": "D:\\Pizza Station 1800\\.archify\\sequence-cache-miss-20261115-010849\\cache-miss.html",
+  "specification": {
+    "sha256": "2def71b364f719797f43846aaf8fe2e7ded5457fd8fede03eaba34113b3d1c31",
+    "bytes": 2666
+  },
+  "artifact": {
+    "sha256": "668d45e53fcd317677aa8720a8f224e723ee35d2c580597968bf1ba4912702bd",
+    "bytes": 833564
+  }
+}

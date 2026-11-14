@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "command": "finalize",
+  "status": "pass",
+  "type": "sequence",
+  "quality": "showcase",
+  "specification": {
+    "path": "D:\\Pizza Station 1800\\.archify\\sequence-cache-miss-20261115-010849\\candidate.json",
+    "sha256": "2def71b364f719797f43846aaf8fe2e7ded5457fd8fede03eaba34113b3d1c31",
+    "bytes": 2666
+  },
+  "artifact": {
+    "path": "D:\\Pizza Station 1800\\.archify\\sequence-cache-miss-20261115-010849\\cache-miss.html",
+    "sha256": "668d45e53fcd317677aa8720a8f224e723ee35d2c580597968bf1ba4912702bd",
+    "bytes": 833564
+  },
+  "gates": {
+    "validate": "pass",
+    "deliver": "pass",
+    "check": "pass",
+    "browser-check": "pass"
+  },
+  "diagnostics": [],
+  "diagnosticSummary": {
+    "total": 0,
+    "shown": 0,
+    "truncated": false
+  },
+  "evidence": {
+    "receipt": "D:\\Pizza Station 1800\\.archify\\sequence-cache-miss-20261115-010849\\cache-miss.finalize.json",
+    "summaryReceipt": "D:\\Pizza Station 1800\\.archify\\sequence-cache-miss-20261115-010849\\cache-miss.finalize-summary.json",
+    "browserCheckReceipt": "D:\\Pizza Station 1800\\.archify\\sequence-cache-miss-20261115-010849\\cache-miss.browser-check.json"
+  },
+  "update": {
+    "status": "current",
+    "installedVersion": "3.2.0",
+    "availableVersion": "3.2.0",
+    "releaseNotes": null,
+    "checkedAt": "2026-11-14T19:09:02.066Z",
+    "source": "network",
+    "noticeRequired": false,
+    "noticeText": null
+  },
+  "visualReview": "not-requested",
+  "durationMs": 3254,
+  "browserCheck": {
+    "requested": true,
+    "ran": true
+  }
+}

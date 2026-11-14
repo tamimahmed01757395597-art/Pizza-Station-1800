@@ -36,6 +36,7 @@ type PlacedOrder = {
   tableNumber: string;
   items: CartItem[];
 };
+type TrackedOrder = Omit<PlacedOrder, 'items'>;
 
 function productCategorySlug(product: Product) {
   return product.categorySlug ?? product.category.toLowerCase().replace(/[^a-z0-9]+/g, '-');
@@ -55,7 +56,6 @@ function ProductPhoto({ product }: { product: Product }) {
 function CartPanel({
   items,
   subtotal,
-  review,
   placing,
   error,
   name,
@@ -69,12 +69,10 @@ function CartPanel({
   onQuantity,
   onRemove,
   onClear,
-  onReview,
   onSubmit,
 }: {
   items: CartItem[];
   subtotal: number;
-  review: boolean;
   placing: boolean;
   error: string;
   name: string;
@@ -88,21 +86,20 @@ function CartPanel({
   onQuantity: (index: number, delta: number) => void;
   onRemove: (index: number) => void;
   onClear: () => void;
-  onReview: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
-    <form onSubmit={onSubmit} className="flex max-h-[88vh] flex-col">
-      <div className="flex items-center justify-between border-b-4 border-[#111111] pb-4">
+    <form onSubmit={onSubmit} className="flex h-full max-h-[88vh] min-h-0 flex-col">
+      <div className="flex shrink-0 items-center justify-between border-b-4 border-[#111111] pb-4">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.2em] text-[#d93625]">Your order</p>
-          <h2 className="mt-1 text-2xl font-black uppercase">{review ? 'Review & place' : 'Order basket'}</h2>
+          <h2 className="mt-1 text-2xl font-black uppercase">Order basket</h2>
         </div>
         <span className="border-2 border-[#111111] bg-[#ffd400] px-2 py-1 text-sm font-black">{items.length}</span>
       </div>
 
       {items.length === 0 ? (
-        <div className="py-8">
+        <div className="min-h-0 flex-1 overflow-y-auto py-8">
           <p className="text-sm font-semibold text-[#615a4e]">Your order is empty. Add a dish to get started.</p>
           {error && <button type="button" onClick={onClear} className="mt-3 border-2 border-[#111111] bg-[#ffd400] px-3 py-2 text-xs font-black uppercase">Clear saved cart</button>}
         </div>
@@ -138,36 +135,32 @@ function CartPanel({
         <p className="mt-2 text-xs leading-5 text-[#615a4e]">Dine-in only. No delivery fee or online payment. The server verifies all prices when you place the order.</p>
       </div>
 
-      {review && items.length > 0 && (
-        <div className="space-y-3 overflow-y-auto pt-4">
-          <p className="border-2 border-[#111111] bg-[#ffd400] p-3 text-xs font-black uppercase">Cash payment at the cashier or manager&apos;s desk after your order.</p>
-          <label className="block text-xs font-black uppercase">Name
-            <input required maxLength={120} value={name} onChange={(event) => onName(event.target.value)} className="mt-1 w-full border-2 border-[#111111] bg-white px-3 py-2 text-sm font-medium normal-case outline-none focus:ring-2 focus:ring-[#d93625]" />
-          </label>
-          <label className="block text-xs font-black uppercase">Email
-            <input required type="email" maxLength={254} value={email} onChange={(event) => onEmail(event.target.value)} className="mt-1 w-full border-2 border-[#111111] bg-white px-3 py-2 text-sm font-medium normal-case outline-none focus:ring-2 focus:ring-[#d93625]" />
-          </label>
-          <label className="block text-xs font-black uppercase">Phone
-            <input required type="tel" maxLength={30} value={phone} onChange={(event) => onPhone(event.target.value)} className="mt-1 w-full border-2 border-[#111111] bg-white px-3 py-2 text-sm font-medium normal-case outline-none focus:ring-2 focus:ring-[#d93625]" />
-          </label>
-          <label className="block text-xs font-black uppercase">Special instructions (optional)
-            <textarea maxLength={1000} value={notes} onChange={(event) => onNotes(event.target.value)} rows={2} className="mt-1 w-full border-2 border-[#111111] bg-white px-3 py-2 text-sm font-medium normal-case outline-none focus:ring-2 focus:ring-[#d93625]" />
-          </label>
+      {items.length > 0 && (
+        <div className="min-h-0 shrink overflow-y-auto pt-4">
+          <div className="space-y-3">
+            <p className="border-2 border-[#111111] bg-[#ffd400] p-3 text-xs font-black uppercase">Cash payment at the cashier or manager&apos;s desk after your order.</p>
+            <label className="block text-xs font-black uppercase">Name
+              <input required maxLength={120} value={name} onChange={(event) => onName(event.target.value)} className="mt-1 w-full border-2 border-[#111111] bg-white px-3 py-2 text-sm font-medium normal-case outline-none focus:ring-2 focus:ring-[#d93625]" />
+            </label>
+            <label className="block text-xs font-black uppercase">Email
+              <input required type="email" maxLength={254} value={email} onChange={(event) => onEmail(event.target.value)} className="mt-1 w-full border-2 border-[#111111] bg-white px-3 py-2 text-sm font-medium normal-case outline-none focus:ring-2 focus:ring-[#d93625]" />
+            </label>
+            <label className="block text-xs font-black uppercase">Phone
+              <input required type="tel" maxLength={30} value={phone} onChange={(event) => onPhone(event.target.value)} className="mt-1 w-full border-2 border-[#111111] bg-white px-3 py-2 text-sm font-medium normal-case outline-none focus:ring-2 focus:ring-[#d93625]" />
+            </label>
+            <label className="block text-xs font-black uppercase">Special instructions (optional)
+              <textarea maxLength={1000} value={notes} onChange={(event) => onNotes(event.target.value)} rows={2} className="mt-1 w-full border-2 border-[#111111] bg-white px-3 py-2 text-sm font-medium normal-case outline-none focus:ring-2 focus:ring-[#d93625]" />
+            </label>
+          </div>
         </div>
       )}
 
-      {error && <p role="alert" className="mt-3 border-2 border-[#d93625] bg-[#d93625]/10 p-3 text-sm font-bold text-[#8b2017]">{error}</p>}
+      {error && <p role="alert" className="mt-3 shrink-0 border-2 border-[#d93625] bg-[#d93625]/10 p-3 text-sm font-bold text-[#8b2017]">{error}</p>}
       {items.length > 0 && (
-        review ? (
-          <button type="submit" disabled={placing} className="mt-4 flex min-h-14 items-center justify-center gap-2 border-4 border-[#111111] bg-[#d93625] px-4 font-black uppercase tracking-wide text-white shadow-[4px_4px_0_#111111] disabled:opacity-60">
-            {placing && <LoaderCircle size={18} className="animate-spin" />}
-            {placing ? 'Sending order…' : 'Place order · cash at restaurant'}
-          </button>
-        ) : (
-          <button type="button" onClick={onReview} className="mt-4 min-h-14 border-4 border-[#111111] bg-[#ffd400] px-4 font-black uppercase tracking-wide shadow-[4px_4px_0_#111111]">
-            Review order
-          </button>
-        )
+        <button type="submit" disabled={placing} className="mt-4 flex min-h-14 shrink-0 items-center justify-center gap-2 border-4 border-[#111111] bg-[#d93625] px-4 font-black uppercase tracking-wide text-white shadow-[4px_4px_0_#111111] disabled:opacity-60">
+          {placing && <LoaderCircle size={18} className="animate-spin" />}
+          {placing ? 'Sending order…' : 'Place order · cash at restaurant'}
+        </button>
       )}
     </form>
   );
@@ -201,16 +194,17 @@ export function QrTableMenu() {
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
   const [customizeQuantity, setCustomizeQuantity] = useState(1);
   const [cartOpen, setCartOpen] = useState(false);
-  const [review, setReview] = useState(false);
   const [placing, setPlacing] = useState(false);
   const [placeError, setPlaceError] = useState('');
   const [customerName, setCustomerName] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [notes, setNotes] = useState('');
+  const [trackedOrders, setTrackedOrders] = useState<TrackedOrder[]>([]);
   const [placedOrder, setPlacedOrder] = useState<PlacedOrder | null>(null);
   const [statusError, setStatusError] = useState('');
   const [cartClearError, setCartClearError] = useState('');
+  const trackedOrdersRef = useRef<TrackedOrder[]>([]);
   const requestCache = useRef<{ signature: string; key: string } | null>(null);
 
   const categories = useMemo(() => {
@@ -280,7 +274,7 @@ export function QrTableMenu() {
     return () => { active = false; };
   }, []);
 
-  const refreshOrderStatus = useCallback(async (order: PlacedOrder, token: string) => {
+  const refreshOrderStatus = useCallback(async (order: TrackedOrder, token: string) => {
     try {
       const response = await fetch(`/api/table-orders/${order.id}`, {
         headers: { 'x-table-token': token },
@@ -292,6 +286,13 @@ export function QrTableMenu() {
         throw new Error(parsed.success ? parsed.data.error : 'Order status could not be refreshed.');
       }
       const current = statusResponseSchema.parse(result);
+      setTrackedOrders((previous) => previous.map((item) => item.id === order.id ? {
+        ...item,
+        status: current.status,
+        paymentStatus: current.payment_status,
+        total: Number(current.total),
+        tableNumber: current.table_number,
+      } : item));
       setPlacedOrder((previous) => previous?.id === order.id ? {
         ...previous,
         status: current.status,
@@ -307,11 +308,19 @@ export function QrTableMenu() {
   }, []);
 
   useEffect(() => {
-    if (!placedOrder || !tableToken) return;
-    void refreshOrderStatus(placedOrder, tableToken);
-    const interval = window.setInterval(() => void refreshOrderStatus(placedOrder, tableToken), 6000);
+    trackedOrdersRef.current = trackedOrders;
+  }, [trackedOrders]);
+
+  useEffect(() => {
+    if (!tableToken) return;
+    const refreshTrackedOrders = () => {
+      trackedOrdersRef.current
+        .filter((order) => !['completed', 'cancelled'].includes(order.status))
+        .forEach((order) => void refreshOrderStatus(order, tableToken));
+    };
+    const interval = window.setInterval(refreshTrackedOrders, 6000);
     return () => window.clearInterval(interval);
-  }, [placedOrder?.id, tableToken, refreshOrderStatus]);
+  }, [tableToken, refreshOrderStatus]);
 
   function addProduct(product: Product, variant?: MenuVariant, addons: MenuAddon[] = [], quantity = 1) {
     if (!product.id) {
@@ -460,12 +469,15 @@ export function QrTableMenu() {
         tableNumber,
         items: cart,
       };
+      setTrackedOrders((previous) => [
+        receipt,
+        ...previous.filter((item) => item.id !== receipt.id),
+      ].slice(0, 10));
       setPlacedOrder(receipt);
       const cartWasCleared = emptyCart();
       if (cartWasCleared) clearIdempotencyKey(requestCache, 'ps-table-order');
       else setCartClearError('Your order was sent, but this browser could not clear its saved cart. Do not submit the same items again; ask staff to verify your order.');
       setCartOpen(false);
-      setReview(false);
     } catch (error) {
       console.error('Dine-in order submission failed:', error);
       setPlaceError(error instanceof Error ? error.message : 'Your order could not be submitted. Please try again.');
@@ -493,7 +505,6 @@ export function QrTableMenu() {
   const cartProps = {
     items: cart,
     subtotal,
-    review,
     placing,
     error: cartError || placeError,
     name: customerName,
@@ -507,7 +518,6 @@ export function QrTableMenu() {
     onQuantity: changeQuantity,
     onRemove: removeCartItem,
     onClear: () => { emptyCart(); setPlaceError(''); },
-    onReview: () => { setReview(true); setPlaceError(''); },
     onSubmit: submitOrder,
   };
 
@@ -522,7 +532,7 @@ export function QrTableMenu() {
               <h1 className="text-lg font-black uppercase sm:text-xl">{tableDisplayLabel(tableNumber)}</h1>
             </div>
           </div>
-          <button type="button" onClick={() => { setReview(false); setCartOpen(true); }} className="relative flex min-h-11 items-center gap-2 border-2 border-[#111111] bg-[#ffd400] px-3 font-black text-[#111111] shadow-[3px_3px_0_#f5ebd7]">
+          <button type="button" onClick={() => setCartOpen(true)} className="relative flex min-h-11 items-center gap-2 border-2 border-[#111111] bg-[#ffd400] px-3 font-black text-[#111111] shadow-[3px_3px_0_#f5ebd7]">
             <ShoppingBag size={18} /> <span className="hidden sm:inline">Your order</span> <span className="border-l-2 border-[#111111] pl-2">{itemCount}</span>
           </button>
         </div>
@@ -534,6 +544,33 @@ export function QrTableMenu() {
           <h2 className="mt-1 text-3xl font-black uppercase sm:text-5xl">Pick your favorites.</h2>
           <p className="mt-2 max-w-2xl text-sm font-semibold text-[#615a4e]">Choose from the menu, customize your order, and pay in cash at the restaurant.</p>
         </div>
+
+        {trackedOrders.length > 0 && (
+          <section aria-labelledby="table-order-status-title" className="mb-8 border-4 border-[#111111] bg-white p-4 shadow-[5px_5px_0_#111111] sm:p-6">
+            <div className="flex flex-wrap items-end justify-between gap-2 border-b-4 border-[#111111] pb-3">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#d93625]">Live updates</p>
+                <h2 id="table-order-status-title" className="mt-1 text-2xl font-black uppercase">Your order status</h2>
+              </div>
+              <p className="text-xs font-bold text-[#615a4e]">Refreshes automatically</p>
+            </div>
+            <div className="mt-4 grid gap-3">
+              {trackedOrders.map((order) => (
+                <article key={order.id} className="flex flex-wrap items-center justify-between gap-3 border-2 border-[#111111] bg-[#f5ebd7] p-3">
+                  <div>
+                    <p className="text-xs font-black uppercase text-[#615a4e]">{order.orderNumber} · {tableDisplayLabel(order.tableNumber)}</p>
+                    <p className="mt-1 text-lg font-black" aria-live="polite">{statusLabel(order.status)}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-black">{money(order.total)}</p>
+                    <p className="text-xs font-bold uppercase">Payment: {order.paymentStatus}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+            {statusError && <p role="status" className="mt-3 text-sm font-semibold text-[#8b2017]">{statusError} We’ll retry automatically.</p>}
+          </section>
+        )}
 
         <div className="mb-7 flex gap-2 overflow-x-auto pb-2" aria-label="Menu categories">
           {[{ slug: 'all', name: 'All items' }, ...categories].map((item) => (
@@ -591,8 +628,8 @@ export function QrTableMenu() {
         </div>
       </section>
 
-      <button type="button" onClick={() => { setReview(false); setCartOpen(true); }} className="fixed inset-x-4 bottom-4 z-20 flex min-h-14 items-center justify-between border-4 border-[#111111] bg-[#ffd400] px-5 font-black uppercase shadow-[5px_5px_0_#111111] lg:hidden">
-        <span>{itemCount > 0 ? `${itemCount} item${itemCount === 1 ? '' : 's'} · ${money(subtotal)}` : 'Your order is empty'}</span><span>{itemCount > 0 ? 'Review order →' : 'View menu →'}</span>
+      <button type="button" onClick={() => setCartOpen(true)} className="fixed inset-x-4 bottom-4 z-20 flex min-h-14 items-center justify-between border-4 border-[#111111] bg-[#ffd400] px-5 font-black uppercase shadow-[5px_5px_0_#111111] lg:hidden">
+        <span>{itemCount > 0 ? `${itemCount} item${itemCount === 1 ? '' : 's'} · ${money(subtotal)}` : 'Your order is empty'}</span><span>{itemCount > 0 ? 'Place order →' : 'View menu →'}</span>
       </button>
 
       {cartOpen && <div className="fixed inset-0 z-40 bg-[#111111]/70 p-3 lg:hidden" onClick={() => setCartOpen(false)}>
