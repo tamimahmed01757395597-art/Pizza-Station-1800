@@ -35,7 +35,7 @@ export async function GET(request: Request, { params }: Context) {
 
     const parsed = orderStatusResponseSchema.safeParse(data);
     if (!parsed.success) {
-      console.error('Dine-in order status RPC returned an invalid response:', parsed.error.flatten());
+      console.error('Dine-in order status RPC returned an invalid response shape');
       return NextResponse.json({ error: 'Unable to load order status.' }, { status: 500 });
     }
     return NextResponse.json(parsed.data, { headers: { 'Cache-Control': 'no-store' } });

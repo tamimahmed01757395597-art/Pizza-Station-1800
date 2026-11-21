@@ -15,21 +15,20 @@ Requirements: Node.js 20.9+, npm, and a Supabase project.
      is intended for browser-visible use and is restricted by RLS.
    - `NEXT_PUBLIC_SITE_URL`: canonical site origin, used for password-reset
      redirects (for example `http://localhost:3000`).
+   - `RATE_LIMIT_IP_HEADER`: leave empty on direct deployments. On a CDN/proxy,
+     set the one header it overwrites on every request (for example
+     `x-vercel-forwarded-for`); client-supplied headers are ignored by default.
    - `RESEND_API_KEY` and `RESEND_FROM_EMAIL`: optional; configure both to send
      order confirmation and status emails. Without them, in-app notifications
      are still recorded.
-3. Apply all six migrations in order using the Supabase CLI. Run
+3. Apply all nine migrations in order using the Supabase CLI. Run
    `supabase init` if this workspace has not been initialized, then `supabase link`
-   and `supabase db push`. Alternatively, run
-   `supabase/migrations/202611140001_initial_schema.sql` followed by
-   `supabase/migrations/202611140002_normalized_database.sql` and
-   `supabase/migrations/202611140003_secure_table_qr_ordering.sql` and
-   `supabase/migrations/202611140004_admin_dashboard_roles.sql` and
-   `supabase/migrations/202611140005_pizza_station_1800_menu.sql` and
-   `supabase/migrations/202611140006_qr_dine_in_experience.sql` in the
-   Supabase SQL Editor. The project needs Supabase Auth and Storage enabled.
-   The migrations use `pgcrypto`, create the `product-images` public bucket,
-   tables, triggers, RLS policies, and transactional order/table-session RPCs.
+   and `supabase db push`. Alternatively, run the files in
+   `supabase/migrations/` in filename order in the Supabase SQL Editor, ending
+   with `202611220001_security_review_remediation.sql`. The project needs
+   Supabase Auth and Storage enabled. The migrations use `pgcrypto`, create the
+   `product-images` public bucket, tables, triggers, RLS policies, and
+   transactional order/table-session RPCs.
 4. In Supabase Auth settings, set the site URL and allow-list
    `http://localhost:3000/auth/callback` and your deployed callback URL.
    Enable email confirmation if desired.
@@ -37,7 +36,8 @@ Requirements: Node.js 20.9+, npm, and a Supabase project.
    to admin (the owner role) directly in the Supabase SQL Editor (never expose this operation
    publicly):
    `update public.profiles set role = 'admin' where email = 'owner@example.com';`
-   Sign in at `/admin/login` after the role change.
+   Sign in at `/station-console/login` after the role change. The staff workspace
+   is intentionally not linked from public pages.
 6. Run `npm run dev`. Validate with `npm test`, `npx tsc --noEmit`, and
    `npm run build`. After migrations are applied to a disposable/staging
    database, run `supabase/tests/table_qr_ordering.sql` in a transaction-capable
@@ -88,7 +88,7 @@ trigger enforcement, data backfills, and RLS changes can affect existing
 clients and permissions. Migration 003 adds a unique SHA-256 QR-token hash to
 each existing restaurant table and replaces public table-row reads with
 staff-only metadata reads. Existing table tokens cannot be recovered in
-plaintext; rotate each existing table QR from `/admin/tables` before printing.
+plaintext; rotate each existing table QR from `/station-console/tables` before printing.
 The migration also validates dine-in orders against the current active table
 session and locks both table and session during order insertion. It detects the
 installed `pgcrypto` schema and creates restricted compatibility wrappers
@@ -107,10 +107,22 @@ It also aligns database authorization with staff workflows: kitchen permission
 can move confirmed orders into preparation and mark them ready, while
 acceptance, rejection, serving, and completion require order-management access.
 
+Migration `202611210000_harden_dine_in_status.sql` scopes QR status reads to the
+table's active session. Migration `202611210001_account_lifecycle.sql` adds
+onboarding and self-service account deletion. Migration
+`202611220001_security_review_remediation.sql` adds a private database-side
+order-submission throttle for direct Supabase RPC calls, stores the verified
+auth email for authenticated orders, fixes anonymous idempotency-key ownership,
+removes `kitchen.manage` from broad order PII SELECT policies, and adds the
+`get_kitchen_orders()` projection for preparation-only data. It does not rewrite
+existing order rows; take a verified backup and review the policy changes before
+applying it to production.
+
 ## Backend API
 
 All request bodies are parsed with Zod. Auth is backed by Supabase Auth and
-httpOnly session cookies; authorization checks the server-side `profiles.role`.
+secure, SameSite=Lax session cookies (browser-readable for realtime subscriptions;
+see F7 below); authorization checks the server-side `profiles.role`.
 Database access uses the caller's Supabase session, while PostgreSQL RPCs run
 the operations that need atomicity.
 
@@ -142,8 +154,9 @@ admins/managers and cashiers with the `payments.confirm` permission record cash
 payment/refund events through `confirm_cash_payment`; each event stores the
 staff ID and timestamp.
 
-Product image uploads accept JPEG, PNG, and WebP files up to 5 MB. The `/admin`
-workspace includes live orders, a Realtime-updated `/admin/dine-in` queue
+Product image uploads accept JPEG, PNG, and WebP files up to 5 MB. The
+`/station-console` workspace includes live orders, a Realtime-updated
+`/station-console/dine-in` queue
 (with a 15-second refresh fallback), kitchen tickets, table QR/session management,
 catalog and image editing, inventory, customer order histories, promotions,
 delivery zones/assignments, cash payment records, staff permissions, reports,
@@ -164,7 +177,7 @@ being calculated from a limited client-side order sample.
   changes use role checks or explicit permission grants.
 - Order totals and option prices come only from the database. Cash receipt
   amounts must match the order total.
-- Create and manage physical tables at `/admin/tables`. The server generates
+- Create and manage physical tables at `/station-console/tables`. The server generates
   256-bit QR tokens and only stores their SHA-256 hashes. QR links put the token
   in the URL fragment; the browser sends it to the server for validation and
   receives the table label only after validation. Public roles cannot select
@@ -187,6 +200,27 @@ being calculated from a limited client-side order sample.
   previous code. Existing token hashes cannot be converted back to QR codes.
 - Product and customer snapshots are preserved on orders after catalog changes.
 - API failures are logged server-side and return structured error responses.
+- API routes are rate limited by the middleware (for example 10 login attempts
+  per 10 minutes and 20 order creations per minute). Only the single
+  `RATE_LIMIT_IP_HEADER` configured by the deployment is trusted; unconfigured
+  client-supplied CDN headers are ignored. At capacity the limiter refuses new
+  keys instead of flushing live counters, and expired buckets are evicted
+  individually. Counters are in memory, so a multi-instance deployment enforces
+  limits per instance; use a shared store (Redis/Upstash) when a global limit is
+  required. Direct Supabase RPC order creation is additionally throttled in the
+  database by a hashed email/user/window key.
+- The enforced Content-Security-Policy is emitted by middleware with a fresh
+  nonce per response for Next.js and GA4 scripts; `unsafe-eval` is not allowed.
+  Script, connection, image and frame origins are explicitly allow-listed from
+  the Supabase/Sentry configuration and the app's actual Google integrations.
+- Guest orders do not send email. Signed-in customers receive confirmations and
+  status notifications only at their verified account address; eligible staff
+  may use the address on a phone order, with a per-recipient cap. Authenticated
+  orders store the verified auth email rather than the submitted address, so
+  later status emails cannot be redirected to a third party.
+- Kitchen accounts use a security-definer projection containing order identity,
+  status, table and item composition. Customer email, phone, addresses and notes
+  are excluded from the kitchen role's read path.
 
 Cashiers and delivery staff need explicit permissions in addition to their
 profile role. The `admin` role is the owner role; managers receive operational
@@ -199,8 +233,10 @@ values ('<staff-profile-uuid>', 'payments.confirm', '<admin-profile-uuid>');
 ```
 
 Supported permission keys include `payments.confirm`, `inventory.manage`,
-`kitchen.manage`, `orders.manage`, and `tables.manage`. Delivery staff can see
-and update only their assigned deliveries. Admins and managers bypass granular
+`kitchen.manage`, `delivery.update`, `orders.manage`, and `tables.manage`.
+Delivery staff can see and update only their assigned deliveries; grant
+`delivery.update` instead of `orders.manage` so drivers do not receive customer
+PII or blanket order-management rights. Admins and managers bypass granular
 permissions where the database policy allows it.
 
 The menu and checkout load products and delivery zones from the API. Browser
@@ -209,3 +245,41 @@ estimates; checkout sends those IDs to `POST /api/orders`, where all prices,
 availability, fees, discounts, and totals are recomputed. Cart items saved by an
 older preview without product IDs must be cleared and re-added from the live
 menu before they can be ordered.
+
+### Backups and restore
+
+`.github/workflows/database-backup.yml` runs a nightly `pg_dump` at 03:00 UTC and
+uploads a gzip-compressed custom-format dump as a GitHub Actions artifact with a
+14-day retention. Add a repository secret named `DATABASE_URL` containing the
+Supabase direct Postgres connection string (never a `NEXT_PUBLIC_*` variable).
+You can also run the workflow manually with `workflow_dispatch`.
+
+To restore from a downloaded artifact:
+
+```bash
+gunzip -c pizza-station-YYYYMMDDTHHMMSSZ.dump.gz > backup.dump
+pg_restore --clean --if-exists --no-owner --no-privileges \
+  --dbname "$DATABASE_URL" backup.dump
+```
+
+Always restore into an empty staging database first and verify it before
+touching production. Supabase paid plans also support Point-in-Time Recovery;
+the scheduled dump is a complementary, plan-independent safety net.
+
+### Account lifecycle, onboarding and observability
+
+- Migrations `202611210000_harden_dine_in_status.sql`,
+  `202611210001_account_lifecycle.sql` and
+  `202611220001_security_review_remediation.sql` must be applied to the Supabase
+  project. The second adds `profiles.onboarding_completed` and the
+  `delete_own_account()` RPC used by the profile page's delete button. The third
+  contains the database-side abuse controls and kitchen data minimisation from
+  the security-review remediation.
+- GA4 is enabled by setting `NEXT_PUBLIC_GA_MEASUREMENT_ID`. Sentry is enabled by
+  setting `NEXT_PUBLIC_SENTRY_DSN` (browser) and `SENTRY_DSN` (server/edge).
+  Leave them empty to disable both; no data leaves the app when unset.
+- Optional Sentry source-map upload needs `SENTRY_ORG`, `SENTRY_PROJECT` and a
+  server-only `SENTRY_AUTH_TOKEN`. Without the token, builds stay offline-safe
+  and runtime error reporting still works.
+- The Privacy Policy and Terms pages are at `/privacy` and `/terms`. They are a
+  starting template and should be reviewed for your jurisdiction before launch.

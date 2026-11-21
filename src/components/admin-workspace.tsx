@@ -10,7 +10,7 @@ type Row = Record<string, unknown>;
 
 const rowResponse = z.record(z.string(), z.unknown());
 const errorSchema = z.object({ error: z.string() });
-const permissions = ['orders.manage', 'kitchen.manage', 'tables.manage', 'payments.confirm', 'inventory.manage'];
+const permissions = ['orders.manage', 'kitchen.manage', 'delivery.update', 'tables.manage', 'payments.confirm', 'inventory.manage'];
 
 function isRow(value: unknown): value is Row {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

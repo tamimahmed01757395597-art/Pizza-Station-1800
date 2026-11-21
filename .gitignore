@@ -21,6 +21,18 @@ yarn-debug.log*
 pnpm-debug.log*
 .vercel/
 .pnp.*
+.config/nextjs-nodejs/
+
+# Uploaded/generated files and credential or backup files
+/uploads/
+*.pem
+*.key
+*.p12
+*.pfx
+*.bak
+*.old
+*.dump
+*.sql.gz
 
 # Operating system files
 .DS_Store

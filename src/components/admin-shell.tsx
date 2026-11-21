@@ -8,6 +8,8 @@ import {
   LogOut, Menu, Package, Percent, Settings, Shield, Truck, Users, Utensils, X,
 } from 'lucide-react';
 import { z } from 'zod';
+import { ADMIN_BASE_PATH, adminPath } from '@/lib/admin-path';
+import { canOpenAdminSection } from '@/lib/admin-access';
 
 const sessionSchema = z.object({
   profile: z.object({ role: z.string(), full_name: z.string(), email: z.string() }),
@@ -15,40 +17,28 @@ const sessionSchema = z.object({
 });
 
 const links = [
-  { href: '/admin', label: 'Overview', icon: LayoutDashboard, access: 'overview' },
-  { href: '/admin/orders', label: 'Live orders', icon: ClipboardList, access: 'orders' },
-  { href: '/admin/dine-in', label: 'Live dine-in orders', icon: Utensils, access: 'orders' },
-  { href: '/admin/kitchen', label: 'Kitchen display', icon: ChefHat, access: 'kitchen' },
-  { href: '/admin/tables', label: 'Tables & QR', icon: Utensils, access: 'tables' },
-  { href: '/admin/menu', label: 'Menu management', icon: CookingPot, access: 'menu' },
-  { href: '/admin/inventory', label: 'Inventory', icon: Package, access: 'inventory' },
-  { href: '/admin/customers', label: 'Customers', icon: Users, access: 'customers' },
-  { href: '/admin/promotions', label: 'Promotions', icon: Percent, access: 'promotions' },
-  { href: '/admin/delivery', label: 'Delivery', icon: Truck, access: 'delivery' },
-  { href: '/admin/payments', label: 'Cash payments', icon: CircleDollarSign, access: 'payments' },
-  { href: '/admin/staff', label: 'Staff & permissions', icon: Shield, access: 'staff' },
-  { href: '/admin/reports', label: 'Reports', icon: BarChart3, access: 'reports' },
-  { href: '/admin/settings', label: 'Settings', icon: Settings, access: 'settings' },
+  { href: adminPath(), label: 'Overview', icon: LayoutDashboard, access: 'overview' },
+  { href: adminPath('orders'), label: 'Live orders', icon: ClipboardList, access: 'orders' },
+  { href: adminPath('dine-in'), label: 'Live dine-in orders', icon: Utensils, access: 'orders' },
+  { href: adminPath('kitchen'), label: 'Kitchen display', icon: ChefHat, access: 'kitchen' },
+  { href: adminPath('tables'), label: 'Tables & QR', icon: Utensils, access: 'tables' },
+  { href: adminPath('menu'), label: 'Menu management', icon: CookingPot, access: 'menu' },
+  { href: adminPath('inventory'), label: 'Inventory', icon: Package, access: 'inventory' },
+  { href: adminPath('customers'), label: 'Customers', icon: Users, access: 'customers' },
+  { href: adminPath('promotions'), label: 'Promotions', icon: Percent, access: 'promotions' },
+  { href: adminPath('delivery'), label: 'Delivery', icon: Truck, access: 'delivery' },
+  { href: adminPath('payments'), label: 'Cash payments', icon: CircleDollarSign, access: 'payments' },
+  { href: adminPath('staff'), label: 'Staff & permissions', icon: Shield, access: 'staff' },
+  { href: adminPath('reports'), label: 'Reports', icon: BarChart3, access: 'reports' },
+  { href: adminPath('settings'), label: 'Settings', icon: Settings, access: 'settings' },
 ];
-
-function canOpen(role: string, permissions: string[], access: string) {
-  if (role === 'admin') return true;
-  if (role === 'manager') return !['staff', 'settings', 'customers'].includes(access);
-  if (access === 'orders') return role === 'cashier' || permissions.includes('orders.manage');
-  if (access === 'kitchen') return role === 'kitchen' || permissions.includes('kitchen.manage');
-  if (access === 'payments') return role === 'cashier' && permissions.includes('payments.confirm');
-  if (access === 'delivery') return role === 'delivery';
-  if (access === 'tables') return permissions.includes('tables.manage');
-  if (access === 'inventory') return permissions.includes('inventory.manage');
-  return false;
-}
 
 function AdminNavigation({ onNavigate, role, permissions }: { onNavigate?: () => void; role: string; permissions: string[] }) {
   const pathname = usePathname();
   return (
     <nav className="grid gap-1">
-      {links.filter((item) => canOpen(role, permissions, item.access)).map(({ href, label, icon: Icon }) => {
-        const active = pathname === href || (href !== '/admin' && pathname.startsWith(`${href}/`));
+      {links.filter((item) => canOpenAdminSection(role, permissions, item.access)).map(({ href, label, icon: Icon }) => {
+        const active = pathname === href || (href !== ADMIN_BASE_PATH && pathname.startsWith(`${href}/`));
         return (
           <Link
             href={href}
@@ -101,7 +91,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST' });
       if (!response.ok) throw new Error('Unable to sign out.');
-      router.replace('/admin/login');
+      router.replace(adminPath('login'));
       router.refresh();
     } catch (signOutError) {
       setError(signOutError instanceof Error ? signOutError.message : 'Unable to sign out.');
@@ -109,13 +99,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }
   }
 
-  if (pathname === '/admin/login') return <>{children}</>;
+  if (pathname === adminPath('login')) return <>{children}</>;
 
   return (
     <div className="min-h-[75vh] bg-[#0c0c0c] text-[#f4f0e7]">
       <div className="mx-auto flex max-w-[1680px]">
         <aside className="sticky top-0 hidden h-screen w-[260px] shrink-0 border-r border-white/10 bg-[#111110] p-5 md:block">
-          <Link href="/admin" className="mb-9 block">
+          <Link href={ADMIN_BASE_PATH} className="mb-9 block">
             <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#e7b84b]">Pizza Station</p>
             <p className="mt-1 text-xl font-semibold">Control room</p>
           </Link>
@@ -139,7 +129,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           {mobileOpen && (
             <div className="fixed inset-0 z-40 bg-black/70 md:hidden" onClick={() => setMobileOpen(false)}>
               <aside className="h-full w-[290px] overflow-y-auto border-r border-white/10 bg-[#111110] p-5" onClick={(event) => event.stopPropagation()}>
-                <Link href="/admin" onClick={() => setMobileOpen(false)} className="mb-6 block text-lg font-semibold">Pizza Station</Link>
+                <Link href={ADMIN_BASE_PATH} onClick={() => setMobileOpen(false)} className="mb-6 block text-lg font-semibold">Pizza Station</Link>
                 <AdminNavigation onNavigate={() => setMobileOpen(false)} role={profile?.role ?? ''} permissions={permissions} />
               </aside>
             </div>

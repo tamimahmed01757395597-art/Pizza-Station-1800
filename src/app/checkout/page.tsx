@@ -245,8 +245,8 @@ export default function Checkout() {
           <h1 className="text-4xl">Thank you.</h1>
           <p className="mt-4">Your order number is <strong className="gold">{placedOrder.order_number}</strong>.</p>
           {total!==null&&Number.isFinite(total)&&<p className="mt-2">Server-calculated total: <strong>{money(total)}</strong></p>}
-          {placedOrder.duplicate&&<p className="mt-3 text-sm text-[#aaa69a]">This is the confirmation for an order already received.</p>}
-          {clearError&&<p role="status" className="mt-4 text-sm text-[#e9d6a2]">{clearError}</p>}
+          {placedOrder.duplicate&&<p className="mt-3 text-sm text-[#635d64]">This is the confirmation for an order already received.</p>}
+          {clearError&&<p role="status" className="mt-4 text-sm text-[#a34023]">{clearError}</p>}
           <Link href="/menu" className="btn mt-6">Back to menu</Link>
         </section>
       </main>
@@ -258,11 +258,11 @@ export default function Checkout() {
       <p className="eyebrow">Almost there</p>
       <h1 className="mt-2 text-5xl">Checkout</h1>
       <div className="panel mt-8 max-w-3xl p-6 sm:p-8">
-        {catalog.status==='unavailable'&&<div role="alert" className="rounded-xl border border-[#e7b84b]/40 bg-[#e7b84b]/10 p-4 text-sm leading-6 text-[#e9d6a2]"><strong>Ordering is unavailable.</strong> The live menu could not be loaded. Configure Supabase and apply the database migrations before placing orders.</div>}
-        {catalog.status==='loading'&&<p role="status" className="rounded-xl border border-white/10 p-4 text-sm text-[#aaa69a]">Checking the live menu…</p>}
-        {cartError&&<p role="alert" className="mt-4 text-sm text-[#ef8a7d]">{cartError}</p>}
-        {items.length>0&&unavailableItems.length>0&&catalog.status==='ready'&&<div role="alert" className="mt-4 rounded-xl border border-[#e7b84b]/40 bg-[#e7b84b]/10 p-4 text-sm text-[#e9d6a2]">Some saved cart items are from the preview menu or are no longer available. Remove them and add items again from the live menu.</div>}
-        {!items.length&&<div className="mt-4 rounded-xl border border-white/10 p-4 text-sm text-[#aaa69a]">Your cart is empty. Add items from the live menu before checkout. <Link className="text-[#e7b84b] underline" href="/menu">Browse menu</Link></div>}
+        {catalog.status==='unavailable'&&<div role="alert" className="border-[3px] border-[#1c1b2a] bg-[#ff6b4a]/10 p-4 text-sm leading-6 text-[#a34023]"><strong>Ordering is unavailable.</strong> The live menu could not be loaded. Configure Supabase and apply the database migrations before placing orders.</div>}
+        {catalog.status==='loading'&&<p role="status" className="border-[3px] border-[#1c1b2a] p-4 text-sm text-[#635d64]">Checking the live menu…</p>}
+        {cartError&&<p role="alert" className="mt-4 text-sm text-[#c23348]">{cartError}</p>}
+        {items.length>0&&unavailableItems.length>0&&catalog.status==='ready'&&<div role="alert" className="mt-4 border-[3px] border-[#1c1b2a] bg-[#ff6b4a]/10 p-4 text-sm text-[#a34023]">Some saved cart items are from the preview menu or are no longer available. Remove them and add items again from the live menu.</div>}
+        {!items.length&&<div className="mt-4 border-[3px] border-[#1c1b2a] p-4 text-sm text-[#635d64]">Your cart is empty. Add items from the live menu before checkout. <Link className="text-[#ff6b4a] underline" href="/menu">Browse menu</Link></div>}
 
         <form onSubmit={placeOrder} className="mt-7">
           <fieldset>
@@ -272,15 +272,15 @@ export default function Checkout() {
                 ['delivery','Delivery'],
                 ['pickup','Pickup'],
                 ['dine_in','Dine-in'],
-              ] as const).map(([value,label])=><button type="button" key={value} onClick={()=>setMode(value)} className={`rounded-lg border px-2 py-3 text-sm ${mode===value?'border-[#e7b84b] text-[#e7b84b]':'border-white/20'}`}>{label}</button>)}
+              ] as const).map(([value,label])=><button type="button" key={value} onClick={()=>setMode(value)} className={`rounded-lg border px-2 py-3 text-sm ${mode===value?'border-[#ff6b4a] text-[#ff6b4a]':'border-[#1c1b2a]/30'}`}>{label}</button>)}
             </div>
           </fieldset>
 
-          {mode==='dine_in'&&<div className="mt-5 rounded-lg border border-[#e7b84b]/30 bg-[#e7b84b]/10 p-4 text-sm">
+          {mode==='dine_in'&&<div className="mt-5 border-[3px] border-[#1c1b2a] bg-[#ff6b4a]/10 p-4 text-sm">
             {tableValidation==='checking'&&<p role="status">Verifying the scanned table…</p>}
             {tableValidation==='valid'&&<p role="status">Ordering at <strong className="gold">{tableNumber}</strong>. The server will verify the QR and session again when you place the order.</p>}
-            {tableValidation==='invalid'&&<p role="alert" className="text-[#ef8a7d]">This table is not accepting orders. Scan its QR again or ask staff to open a session.</p>}
-            {tableValidation==='none'&&<p role="alert" className="text-[#ef8a7d]">Scan the QR code at your table before placing a dine-in order.</p>}
+            {tableValidation==='invalid'&&<p role="alert" className="text-[#c23348]">This table is not accepting orders. Scan its QR again or ask staff to open a session.</p>}
+            {tableValidation==='none'&&<p role="alert" className="text-[#c23348]">Scan the QR code at your table before placing a dine-in order.</p>}
           </div>}
 
           {mode==='delivery'&&<div className="mt-5 grid gap-4 sm:grid-cols-2">
@@ -296,9 +296,9 @@ export default function Checkout() {
                 {zones.map(item=><option key={item.id} value={item.id}>{item.name} — {money(Number(item.fee))} delivery</option>)}
               </select>
             </label>
-            {zonesError&&<p role="alert" className="text-sm text-[#ef8a7d] sm:col-span-2">{zonesError}</p>}
-            {zone&&<p className="text-xs text-[#aaa69a] sm:col-span-2">Minimum order: {money(Number(zone.minimum_order))}{zone.postal_codes.length?` · Serves ${zone.postal_codes.join(', ')}`:''}</p>}
-            {zone&&postalCode.trim()&&!postalMatches&&<p role="alert" className="text-sm text-[#ef8a7d] sm:col-span-2">That postal code is outside the selected delivery zone.</p>}
+            {zonesError&&<p role="alert" className="text-sm text-[#c23348] sm:col-span-2">{zonesError}</p>}
+            {zone&&<p className="text-xs text-[#635d64] sm:col-span-2">Minimum order: {money(Number(zone.minimum_order))}{zone.postal_codes.length?` · Serves ${zone.postal_codes.join(', ')}`:''}</p>}
+            {zone&&postalCode.trim()&&!postalMatches&&<p role="alert" className="text-sm text-[#c23348] sm:col-span-2">That postal code is outside the selected delivery zone.</p>}
           </div>}
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -316,12 +316,12 @@ export default function Checkout() {
             <input className="field mt-2" value={couponCode} onChange={event=>setCouponCode(event.target.value)} maxLength={40}/>
           </label>
           <p className="mt-5 text-sm">Payment: <strong className="gold">Cash {mode==='delivery'?'on delivery':'at restaurant'}</strong></p>
-          <p className="mt-2 text-xs text-[#928d83]">Prices, discounts, delivery fees, availability, and the final total are verified by the server.</p>
-          {formError&&<p role="alert" className="mt-4 rounded-lg border border-[#ef8a7d]/40 bg-[#ef8a7d]/10 p-3 text-sm text-[#ef8a7d]">{formError}</p>}
-          <button type="submit" disabled={!readyToSubmit||submitting} className="mt-6 w-full rounded-full bg-[#e7b84b] px-5 py-4 font-bold text-black disabled:cursor-not-allowed disabled:bg-[#514a39] disabled:text-[#b9ac8d]">
+          <p className="mt-2 text-xs text-[#635d64]">Prices, discounts, delivery fees, availability, and the final total are verified by the server.</p>
+          {formError&&<p role="alert" className="mt-4 border-[3px] border-[#1c1b2a] bg-[#c23348]/10 p-3 text-sm text-[#c23348]">{formError}</p>}
+          <button type="submit" disabled={!readyToSubmit||submitting} className="mt-6 w-full border-[3px] border-[#1c1b2a] bg-[#ff6b4a] shadow-[5px_5px_0_#1c1b2a] px-5 py-4 font-bold text-[#1c1b2a] disabled:cursor-not-allowed disabled:bg-[#ded8d5] disabled:text-[#7c747a]">
             {submitting?'Submitting securely…':'Place order'}
           </button>
-          <Link href="/cart" className="mt-4 block text-center text-sm text-[#e7b84b]">Back to cart</Link>
+          <Link href="/cart" className="mt-4 block text-center text-sm text-[#ff6b4a]">Back to cart</Link>
         </form>
       </div>
     </main>

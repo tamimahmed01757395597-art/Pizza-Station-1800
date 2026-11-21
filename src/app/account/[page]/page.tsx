@@ -5,6 +5,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { money } from '@/lib/menu';
+import { validateForm } from '@/lib/form-validation';
+import { loginSchema, registerSchema, profileUpdateSchema } from '@/lib/schemas';
+import { DeleteAccountButton } from '@/components/delete-account';
+import { EmptyState } from '@/components/ui-states';
 
 const errorSchema = z.object({ error: z.string() });
 const registrationResponseSchema = z.object({ session: z.unknown().nullable().optional() });
@@ -13,6 +17,8 @@ const profileResponseSchema = z.object({
     email: z.string(),
     full_name: z.string(),
     phone: z.string().nullable(),
+    email_verified: z.boolean().default(false),
+    onboarding_completed: z.boolean().default(false),
   }),
 });
 const customerOrderSchema = z.object({
@@ -66,6 +72,11 @@ export default function AccountPage() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [profileEmail, setProfileEmail] = useState('');
+  const [emailVerified, setEmailVerified] = useState(true);
+  const [onboardingCompleted, setOnboardingCompleted] = useState(true);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [resending, setResending] = useState(false);
+  const [verifyLink, setVerifyLink] = useState(false);
   const [orders, setOrders] = useState<z.infer<typeof customerOrderSchema>[]>([]);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -117,6 +128,8 @@ export default function AccountPage() {
           setName(parsed.data.profile.full_name);
           setPhone(parsed.data.profile.phone ?? '');
           setProfileEmail(parsed.data.profile.email);
+          setEmailVerified(parsed.data.profile.email_verified);
+          setOnboardingCompleted(parsed.data.profile.onboarding_completed);
         }
       })
       .catch((profileError: unknown) => {
@@ -135,16 +148,23 @@ export default function AccountPage() {
     event.preventDefault();
     setError('');
     setMessage('');
+    const registering = page === 'register';
+    const check = validateForm(registering ? registerSchema : loginSchema, registering
+      ? { name, email, password, ...(phone ? { phone } : {}) }
+      : { email, password });
+    if (!check.ok) {
+      setFieldErrors(check.errors);
+      setError(check.message);
+      return;
+    }
+    setFieldErrors({});
     setLoading(true);
 
     try {
-      const registering = page === 'register';
       const response = await fetch(registering ? '/api/auth/register' : '/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(registering
-          ? { name: name.trim(), email: email.trim(), password, ...(phone.trim() ? { phone: phone.trim() } : {}) }
-          : { email: email.trim(), password }),
+        body: JSON.stringify(check.data),
       });
       const result: unknown = await response.json();
 
@@ -153,16 +173,19 @@ export default function AccountPage() {
         throw new Error(parsed.success ? parsed.data.error : 'Unable to continue. Please try again.');
       }
 
+      let destination = '/account/profile';
       if (registering) {
         const parsed = registrationResponseSchema.safeParse(result);
         if (!parsed.success) throw new Error('Account created, but the response was unexpected. Please try signing in.');
         if (!parsed.data.session) {
           setMessage('Account created. Check your email to confirm your address, then sign in.');
+          setVerifyLink(true);
           return;
         }
+        destination = '/onboarding';
       }
 
-      router.replace('/account/profile');
+      router.replace(destination);
       router.refresh();
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : 'Unable to continue. Please try again.');
@@ -175,12 +198,19 @@ export default function AccountPage() {
     event.preventDefault();
     setError('');
     setMessage('');
+    const check = validateForm(profileUpdateSchema, { full_name: name, phone: phone || null });
+    if (!check.ok) {
+      setFieldErrors(check.errors);
+      setError(check.message);
+      return;
+    }
+    setFieldErrors({});
     setSavingProfile(true);
     try {
       const response = await fetch('/api/account/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: name.trim(), phone: phone.trim() || null }),
+        body: JSON.stringify(check.data),
       });
       const result: unknown = await response.json();
       if (!response.ok) {
@@ -219,6 +249,30 @@ export default function AccountPage() {
     }
   }
 
+  async function resendVerification() {
+    setError('');
+    setMessage('');
+    setResending(true);
+    try {
+      if (!profileEmail) throw new Error('Your profile has no email address on file.');
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: profileEmail }),
+      });
+      const result: unknown = await response.json();
+      if (!response.ok) {
+        const parsed = errorSchema.safeParse(result);
+        throw new Error(parsed.success ? parsed.data.error : 'Unable to resend the verification email.');
+      }
+      setMessage('A fresh verification link is on its way.');
+    } catch (resendError) {
+      setError(resendError instanceof Error ? resendError.message : 'Unable to resend the verification email.');
+    } finally {
+      setResending(false);
+    }
+  }
+
   return (
     <main className="container min-h-[55vh] py-16">
       <div className="panel mx-auto max-w-xl p-7 sm:p-9">
@@ -226,14 +280,15 @@ export default function AccountPage() {
         <h1 className="mt-2 text-4xl">{title || 'Account page'}</h1>
         {['login', 'register'].includes(page) ? (
           <>
-            <p className="mt-3 text-sm leading-6 text-[#a6a29a]">
+            <p className="mt-3 text-sm leading-6 text-[#7c747a]">
               {page === 'login' ? 'Sign in to your customer account.' : 'Create an account to get started.'}
             </p>
-            <form onSubmit={submitAuth} className="mt-7 grid gap-4">
+            <form onSubmit={submitAuth} className="mt-7 grid gap-4" noValidate>
               {page === 'register' && (
                 <>
                   <label className="text-sm">Full name
-                    <input className="field mt-2" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={120} />
+                    <input className="field mt-2" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} aria-invalid={Boolean(fieldErrors.name)} />
+                    {fieldErrors.name && <span className="mt-1 block text-xs text-[#c23348]">{fieldErrors.name}</span>}
                   </label>
                   <label className="text-sm">Phone (optional)
                     <input className="field mt-2" type="tel" autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} />
@@ -241,19 +296,27 @@ export default function AccountPage() {
                 </>
               )}
               <label className="text-sm">Email
-                <input className="field mt-2" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required maxLength={254} />
+                <input className="field mt-2" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} maxLength={254} aria-invalid={Boolean(fieldErrors.email)} />
+                {fieldErrors.email && <span className="mt-1 block text-xs text-[#c23348]">{fieldErrors.email}</span>}
               </label>
               <label className="text-sm">Password
-                <input className="field mt-2" type="password" autoComplete={page === 'register' ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} required minLength={page === 'register' ? 10 : 1} maxLength={128} />
-                {page === 'register' && <span className="mt-1 block text-xs text-[#a6a29a]">Use at least 10 characters.</span>}
+                <input className="field mt-2" type="password" autoComplete={page === 'register' ? 'new-password' : 'current-password'} value={password} onChange={(event) => setPassword(event.target.value)} maxLength={128} aria-invalid={Boolean(fieldErrors.password)} />
+                {fieldErrors.password
+                  ? <span className="mt-1 block text-xs text-[#c23348]">{fieldErrors.password}</span>
+                  : page === 'register' && <span className="mt-1 block text-xs text-[#7c747a]">Use at least 10 characters.</span>}
               </label>
-              {error && <p role="alert" className="text-sm text-[#ef8a7d]">{error}</p>}
-              {message && <p role="status" className="text-sm text-[#e7b84b]">{message}</p>}
+              {error && <p role="alert" className="text-sm text-[#c23348]">{error}</p>}
+              {message && <p role="status" className="text-sm text-[#ff6b4a]">{message}</p>}
+              {verifyLink && (
+                <Link href="/account/verify-email" className="text-sm text-[#635d64] underline">
+                  Didn&apos;t get the email? Resend verification
+                </Link>
+              )}
               <button className="btn mt-2 disabled:opacity-50" disabled={loading}>
                 {loading ? 'Please wait…' : page === 'login' ? 'Sign in' : 'Create account'}
               </button>
             </form>
-            <p className="mt-5 text-sm text-[#a6a29a]">
+            <p className="mt-5 text-sm text-[#7c747a]">
               {page === 'login' ? (
                 <>New to us? <Link className="gold" href="/account/register">Create an account</Link></>
               ) : (
@@ -261,60 +324,79 @@ export default function AccountPage() {
               )}
             </p>
             {page === 'login' && (
-              <p className="mt-3 text-sm text-[#a6a29a]">
-                Staff? <Link className="gold" href="/admin/login">Staff sign in</Link>
-              </p>
+              <Link href="/account/forgot-password" className="mt-2 inline-block text-sm text-[#635d64] underline">
+                Forgot your password?
+              </Link>
             )}
           </>
         ) : page === 'profile' ? (
           <>
-            <p className="mt-3 text-sm text-[#a6a29a]">{profileEmail || (profileLoading ? 'Loading your account…' : '')}</p>
-            <form onSubmit={saveProfile} className="mt-7 grid gap-4">
+            <p className="mt-3 text-sm text-[#7c747a]">{profileEmail || (profileLoading ? 'Loading your account…' : '')}</p>
+            {!profileLoading && !emailVerified && (
+              <div className="mt-4 border-[3px] border-[#ffc857] bg-[#ffc857]/20 p-4 text-sm">
+                <p className="font-bold">Your email is not verified yet.</p>
+                <p className="mt-1 text-[#635d64]">Check your inbox, or send a fresh link below.</p>
+                <button type="button" onClick={resendVerification} disabled={resending} className="mt-3 text-sm font-bold text-[#0b7777] underline disabled:opacity-50">
+                  {resending ? 'Sending…' : 'Resend verification email'}
+                </button>
+              </div>
+            )}
+            {!profileLoading && !onboardingCompleted && (
+              <div className="mt-4 border-[3px] border-[#0b7777] bg-[#7fd1c1]/20 p-4 text-sm">
+                <p className="font-bold">Finish setting up your account.</p>
+                <Link href="/onboarding" className="mt-2 inline-block text-sm font-bold text-[#0b7777] underline">Start onboarding →</Link>
+              </div>
+            )}
+            <form onSubmit={saveProfile} className="mt-7 grid gap-4" noValidate>
               <label className="text-sm">Full name
-                <input className="field mt-2" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} required maxLength={120} disabled={profileLoading || savingProfile} />
+                <input className="field mt-2" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} maxLength={120} disabled={profileLoading || savingProfile} aria-invalid={Boolean(fieldErrors.full_name)} />
+                {fieldErrors.full_name && <span className="mt-1 block text-xs text-[#c23348]">{fieldErrors.full_name}</span>}
               </label>
               <label className="text-sm">Phone
                 <input className="field mt-2" type="tel" autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} disabled={profileLoading || savingProfile} />
               </label>
-              {error && <p role="alert" className="text-sm text-[#ef8a7d]">{error}</p>}
-              {message && <p role="status" className="text-sm text-[#e7b84b]">{message}</p>}
+              {error && <p role="alert" className="text-sm text-[#c23348]">{error}</p>}
+              {message && <p role="status" className="text-sm text-[#ff6b4a]">{message}</p>}
               <button className="btn mt-2 disabled:opacity-50" disabled={profileLoading || savingProfile}>
                 {profileLoading ? 'Loading profile…' : savingProfile ? 'Saving…' : 'Save profile'}
               </button>
             </form>
             <div className="mt-5 flex flex-wrap gap-3 text-sm">
-              <Link className="text-[#e7b84b] underline" href="/account/orders">View past orders</Link>
-              <Link className="text-[#aaa69a] underline" href="/menu">Browse menu</Link>
+              <Link className="text-[#ff6b4a] underline" href="/account/orders">View past orders</Link>
+              <Link className="text-[#635d64] underline" href="/menu">Browse menu</Link>
+              <Link className="text-[#635d64] underline" href="/account/reset-password">Change password</Link>
             </div>
-            <button type="button" className="mt-5 text-sm text-[#e7b84b] underline disabled:opacity-50" onClick={signOut} disabled={signingOut}>
+            <button type="button" className="mt-5 text-sm text-[#ff6b4a] underline disabled:opacity-50" onClick={signOut} disabled={signingOut}>
               {signingOut ? 'Signing out…' : 'Sign out'}
             </button>
+            <DeleteAccountButton />
           </>
         ) : page === 'addresses' ? (
           <div className="mt-7 grid gap-4">
-            <p className="text-sm text-[#aaa69a]">Saved addresses are not connected yet.</p>
+            <p className="text-sm text-[#635d64]">Saved addresses are not connected yet.</p>
             <label className="text-sm">Address label<input className="field mt-2" placeholder="Home, work…" /></label>
             <label className="text-sm">Address details<textarea className="field mt-2" rows={3} placeholder="Street, area, city" /></label>
             <button className="btn mt-2" disabled type="button">Address storage not connected</button>
           </div>
         ) : page === 'orders' ? (
           <div className="mt-7 grid gap-4">
-            <Link href="/account/profile" className="text-sm text-[#e7b84b] underline">← Back to profile</Link>
-            {error && <p role="alert" className="rounded-lg border border-[#ef8a7d]/30 bg-[#ef8a7d]/10 p-4 text-sm text-[#ef8a7d]">{error}</p>}
-            {ordersLoading ? <p role="status" className="text-sm text-[#aaa69a]">Loading your orders…</p> : orders.length ? orders.map((order) => (
-              <article key={order.id} className="rounded-xl border border-white/10 bg-black/10 p-4">
+            <Link href="/account/profile" className="text-sm text-[#ff6b4a] underline">← Back to profile</Link>
+            {error && <p role="alert" className="border-[3px] border-[#1c1b2a] bg-[#c23348]/10 p-4 text-sm text-[#c23348]">{error}</p>}
+            {ordersLoading ? <p role="status" className="text-sm text-[#635d64]">Loading your orders…</p> : orders.length ? orders.map((order) => (
+              <article key={order.id} className="border-[3px] border-[#1c1b2a] bg-[#1c1b2a]/5 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div><h2 className="font-semibold">{order.order_number}</h2><p className="mt-1 text-xs capitalize text-[#aaa69a]">{order.order_type.replaceAll('_', ' ')} · {new Date(order.created_at).toLocaleString()}</p></div>
-                  <div className="text-right"><p className="font-semibold">{money(Number(order.total))}</p><p className="mt-1 text-xs capitalize text-[#e7b84b]">{order.status.replaceAll('_', ' ')} · {order.payment_status}</p></div>
+                  <div><h2 className="font-semibold">{order.order_number}</h2><p className="mt-1 text-xs capitalize text-[#635d64]">{order.order_type.replaceAll('_', ' ')} · {new Date(order.created_at).toLocaleString()}</p></div>
+                  <div className="text-right"><p className="font-semibold">{money(Number(order.total))}</p><p className="mt-1 text-xs capitalize text-[#ff6b4a]">{order.status.replaceAll('_', ' ')} · {order.payment_status}</p></div>
                 </div>
-                <ul className="mt-3 grid gap-1 border-t border-white/5 pt-3 text-sm text-[#d6d1c7]">
+                <ul className="mt-3 grid gap-1 border-t border-[#1c1b2a]/15 pt-3 text-sm text-[#635d64]">
                   {order.items.map((item, index) => <li key={`${order.id}-${index}`}>{item.quantity} × {snapshotName(item.snapshot)}</li>)}
                 </ul>
               </article>
-            )) : !error && <div className="rounded-xl border border-dashed border-white/10 p-8 text-center">
-              <p className="text-sm text-[#aaa69a]">No orders are linked to this account yet.</p>
-              <Link href="/menu" className="mt-4 inline-block rounded-full bg-[#c9342e] px-5 py-3 text-sm font-semibold text-white">Browse the menu</Link>
-            </div>}
+            )) : !error && <EmptyState
+              title="No orders yet"
+              description="Once you place an order it will appear here with its live preparation status."
+              action={<Link href="/menu" className="btn text-xs">Browse the menu</Link>}
+            />}
           </div>
         ) : (
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -323,7 +405,7 @@ export default function AccountPage() {
               ['Addresses', '/account/addresses'],
               ['Orders', '/account/orders'],
             ].map(([label, href]) => (
-              <Link className="rounded-lg border border-white/10 p-4 text-sm hover:border-[#e7b84b]" href={href} key={href}>
+              <Link className="border-[3px] border-[#1c1b2a] p-4 text-sm hover:border-[#ff6b4a]" href={href} key={href}>
                 {label} →
               </Link>
             ))}

@@ -4,7 +4,7 @@ import { apiError, parseJson, requireRole } from '@/lib/api';
 
 const grantSchema = z.object({
   profile_id: z.string().uuid(),
-  permission_key: z.enum(['orders.manage', 'kitchen.manage', 'tables.manage', 'payments.confirm', 'inventory.manage']),
+  permission_key: z.enum(['orders.manage', 'kitchen.manage', 'delivery.update', 'tables.manage', 'payments.confirm', 'inventory.manage']),
 }).strict();
 
 export async function GET() {

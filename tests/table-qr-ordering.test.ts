@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   createSupabaseServerClient: vi.fn(),
   rpc: vi.fn(),
+  getUser: vi.fn(),
   sendOrderEmail: vi.fn(),
 }));
 
@@ -48,7 +49,8 @@ function statusRequest(id: string, tableToken: string) {
 describe('table QR ordering', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.createSupabaseServerClient.mockResolvedValue({ rpc: mocks.rpc });
+    mocks.getUser.mockResolvedValue({ data: { user: null }, error: null });
+    mocks.createSupabaseServerClient.mockResolvedValue({ rpc: mocks.rpc, auth: { getUser: mocks.getUser } });
     mocks.sendOrderEmail.mockResolvedValue(undefined);
   });
 
@@ -106,6 +108,8 @@ describe('table QR ordering', () => {
       p_payload: expect.objectContaining({ table_token: token }),
     });
     expect(mocks.rpc.mock.calls[0][1].p_payload).not.toHaveProperty('restaurant_table_id');
+    // A guest order must not trigger restaurant-branded email to the submitted address (F4).
+    expect(mocks.sendOrderEmail).not.toHaveBeenCalled();
   });
 
   it('rejects an order when its table session closes before submission', async () => {

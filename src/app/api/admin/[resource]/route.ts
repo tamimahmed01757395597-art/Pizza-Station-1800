@@ -78,7 +78,7 @@ export async function GET(request: Request, { params }: Context) {
       }
       const report = z.record(z.string(), z.unknown()).safeParse(data);
       if (!report.success) {
-        console.error('Report RPC returned an invalid response:', report.error);
+        console.error('Report RPC returned an invalid response shape');
         return NextResponse.json({ error: 'Unable to load reports.' }, { status: 500 });
       }
       return NextResponse.json({ reports: {
@@ -114,6 +114,13 @@ export async function GET(request: Request, { params }: Context) {
       return NextResponse.json({ inventory: data });
     }
     if (resource === 'orders') {
+      // Kitchen stations only need preparation data. The DB function returns
+      // no customer email, phone, address, notes or customer id (F3).
+      if (role === 'kitchen') {
+        const { data: kitchenOrders, error: kitchenError } = await supabase.rpc('get_kitchen_orders');
+        if (kitchenError) throw kitchenError;
+        return NextResponse.json({ orders: Array.isArray(kitchenOrders) ? kitchenOrders : [] });
+      }
       const { searchParams } = new URL(request.url);
       const orderType = searchParams.get('order_type');
       if (orderType && !z.enum(['dine_in', 'delivery', 'pickup']).safeParse(orderType).success) {

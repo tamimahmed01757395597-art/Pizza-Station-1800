@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     }
     const parsed = resolveResponseSchema.safeParse(data);
     if (!parsed.success) {
-      console.error('Table QR validation returned an invalid response:', parsed.error);
+      console.error('Table QR validation returned an invalid response shape');
       throw new ApiError(500, 'Table validation is temporarily unavailable.');
     }
     return NextResponse.json(parsed.data);

@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     if (error) throw tableRpcError(error);
     const parsed = tableResponseSchema.safeParse(data);
     if (!parsed.success) {
-      console.error('Table creation returned an invalid response:', parsed.error);
+      console.error('Table creation returned an invalid response shape');
       return NextResponse.json({ error: 'The table was created, but its response was invalid. Rotate its QR to print it.' }, { status: 500 });
     }
     return NextResponse.json({ table: parsed.data, token }, { status: 201 });

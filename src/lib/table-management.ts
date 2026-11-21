@@ -18,6 +18,6 @@ export function tableRpcError(error: { code?: string; message: string }) {
   if (error.code === '42501') return new ApiError(403, 'Table management permission required.');
   if (error.code === '22023') return new ApiError(400, error.message);
   if (error.code === '23505') return new ApiError(409, 'A table with that number already exists.');
-  console.error('Table QR database operation failed:', error.code, error.message);
+  console.error('Table QR database operation failed:', error.code ?? 'unknown code');
   return new ApiError(500, 'The table operation could not be completed.');
 }

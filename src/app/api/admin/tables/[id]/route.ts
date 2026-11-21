@@ -29,7 +29,7 @@ export async function PATCH(request: Request, { params }: Context) {
       const { data, error } = await supabase.rpc('open_table_session', { p_restaurant_table_id: id });
       if (error) throw tableRpcError(error);
       if (typeof data !== 'string' || !z.string().uuid().safeParse(data).success) {
-        console.error('Open table session returned an invalid session ID:', data);
+        console.error('Open table session returned an invalid session ID');
         return NextResponse.json({ error: 'Unable to open the table session.' }, { status: 500 });
       }
       return NextResponse.json({ session_id: data });
@@ -51,7 +51,7 @@ export async function PATCH(request: Request, { params }: Context) {
       if (error) throw tableRpcError(error);
       const parsed = tableResponseSchema.safeParse(data);
       if (!parsed.success) {
-        console.error('Table update returned an invalid response:', parsed.error);
+        console.error('Table update returned an invalid response shape');
         return NextResponse.json({ error: 'Unable to save table details.' }, { status: 500 });
       }
       return NextResponse.json({ table: parsed.data });
@@ -66,7 +66,7 @@ export async function PATCH(request: Request, { params }: Context) {
       if (error) throw tableRpcError(error);
       const parsed = tableResponseSchema.safeParse(data);
       if (!parsed.success) {
-        console.error('QR rotation returned an invalid response:', parsed.error);
+        console.error('QR rotation returned an invalid response shape');
         return NextResponse.json({ error: 'The QR was rotated, but its response was invalid. Rotate again to print it.' }, { status: 500 });
       }
       return NextResponse.json({ table: parsed.data, token });
@@ -79,7 +79,7 @@ export async function PATCH(request: Request, { params }: Context) {
     if (error) throw tableRpcError(error);
     const parsed = tableResponseSchema.safeParse(data);
     if (!parsed.success) {
-      console.error('Table status update returned an invalid response:', parsed.error);
+      console.error('Table status update returned an invalid response shape');
       return NextResponse.json({ error: 'Unable to update the table status.' }, { status: 500 });
     }
     return NextResponse.json({ table: parsed.data });

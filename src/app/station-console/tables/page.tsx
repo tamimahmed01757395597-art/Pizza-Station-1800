@@ -5,6 +5,7 @@ import QRCode from 'qrcode';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { z } from 'zod';
 import { money } from '@/lib/menu';
+import { adminPath } from '@/lib/admin-path';
 
 const sessionSummarySchema = z.object({
   id: z.string().uuid(),
@@ -244,7 +245,7 @@ export default function AdminTablesPage() {
         QR codes identify a table, while staff-opened sessions control when orders are accepted. Only a token hash is stored in the database; create or rotate a QR to download a new printable code.
       </p>
       <p className="mt-2 text-sm text-[#aaa69a]">
-        Staff sign-in: <Link href="/admin/login" className="gold underline">Sign in</Link>
+        Staff sign-in: <Link href={adminPath('login')} className="gold underline">Sign in</Link>
       </p>
       {error && <p role="alert" className="mt-5 rounded-lg border border-[#ef8a7d]/40 bg-[#ef8a7d]/10 p-4 text-sm text-[#ef8a7d]">{error}</p>}
       {notice && <p role="status" className="mt-5 rounded-lg border border-[#e7b84b]/40 bg-[#e7b84b]/10 p-4 text-sm text-[#e9d6a2]">{notice}</p>}

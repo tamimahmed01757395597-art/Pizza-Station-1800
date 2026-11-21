@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { z } from 'zod';
 import { money } from '@/lib/menu';
+import { adminPath } from '@/lib/admin-path';
 
 const orderSchema = z.object({
   id: z.string().uuid(),
@@ -96,7 +97,7 @@ export default function AdminOverviewPage() {
           <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">Good service starts here.</h1>
           <p className="mt-2 text-sm text-[#9b978f]">Live figures from your Supabase orders.</p>
         </div>
-        <Link href="/admin/orders" className="rounded-full bg-[#c9342e] px-5 py-3 text-sm font-semibold text-white hover:bg-[#df4038]">View live orders</Link>
+        <Link href={adminPath('orders')} className="rounded-full bg-[#c9342e] px-5 py-3 text-sm font-semibold text-white hover:bg-[#df4038]">View live orders</Link>
       </div>
 
       {error && <p role="alert" className="mt-6 rounded-xl border border-[#ef8a7d]/30 bg-[#ef8a7d]/10 p-4 text-sm text-[#ef8a7d]">{error}</p>}
@@ -158,7 +159,7 @@ export default function AdminOverviewPage() {
           <section className="mt-5 rounded-2xl border border-white/10 bg-[#151514]">
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4 sm:px-6">
               <div><h2 className="font-semibold">Recent orders</h2><p className="mt-1 text-xs text-[#88857e]">Newest orders from the admin feed</p></div>
-              <Link href="/admin/orders" className="text-sm text-[#e7b84b] hover:underline">All orders →</Link>
+              <Link href={adminPath('orders')} className="text-sm text-[#e7b84b] hover:underline">All orders →</Link>
             </div>
             {orders.length ? <div className="overflow-x-auto">
               <table className="w-full min-w-[700px] text-left text-sm">

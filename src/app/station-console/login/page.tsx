@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 import { z } from 'zod';
+import { ADMIN_BASE_PATH } from '@/lib/admin-path';
 
 const errorSchema = z.object({ error: z.string() });
 
@@ -29,7 +30,7 @@ export default function StaffLoginPage() {
         const parsed = errorSchema.safeParse(result);
         throw new Error(parsed.success ? parsed.data.error : 'Unable to sign in.');
       }
-      router.replace('/admin');
+      router.replace(ADMIN_BASE_PATH);
     } catch (signInError) {
       setError(signInError instanceof Error ? signInError.message : 'Unable to sign in.');
     } finally {
