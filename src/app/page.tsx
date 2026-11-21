@@ -1,13 +1,15 @@
 import Link from 'next/link';
 import { ArrowRight, Flame, MapPin, Phone, QrCode, ShieldCheck, Sparkles, Utensils, Clock } from 'lucide-react';
 import { FeaturedProducts } from '@/components/products';
+import { ScrollReveal } from '@/components/scroll-reveal';
 import { restaurant } from '@/lib/restaurant';
 
 export default function Home() {
   return (
     <main className="bg-[#121110] text-[#f6f1e8]">
+      <ScrollReveal>
       {/* Editorial Split Hero (Zero Gradients) */}
-      <section className="border-b border-[#2b2721] bg-[#161412] py-14 sm:py-20">
+      <section className="hero-section border-b border-[#2b2721] bg-[#161412] py-14 sm:py-20">
         <div className="container grid items-center gap-12 lg:grid-cols-12">
           {/* Left Column: Hero Manifesto */}
           <div className="lg:col-span-7">
@@ -19,17 +21,17 @@ export default function Home() {
               <span className="station-stamp">EST. 1800</span>
             </div>
 
-            <h1 className="serif text-4xl font-bold leading-[1.08] sm:text-6xl lg:text-[64px]">
+            <h1 className="hero-title serif text-4xl font-bold leading-[1.08] sm:text-6xl lg:text-[64px]">
               Fire-baked crusts.<br />
               Charcoal grills.<br />
               <span className="text-[#e5b342] italic">Station craft.</span>
             </h1>
 
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-[#c4bdae] sm:text-lg">
+            <p className="hero-copy mt-6 max-w-xl text-base leading-relaxed text-[#c4bdae] sm:text-lg">
               Freshly stretched stone-hearth pizzas, signature smash burgers, slow-steamed dum biryani pots, and crispy platters. Crafted fresh to order for dine-in table QR, takeout, and local delivery.
             </p>
 
-            <div className="mt-8 flex flex-wrap items-center gap-3">
+            <div className="hero-actions mt-8 flex flex-wrap items-center gap-3">
               <Link href="/menu" className="btn !py-3 !px-6 text-sm font-bold uppercase tracking-wider">
                 Explore The Menu <ArrowRight size={16} />
               </Link>
@@ -68,14 +70,14 @@ export default function Home() {
           </div>
 
           {/* Right Column: Framed Editorial Hero Showcase Card */}
-          <div className="lg:col-span-5">
-            <div className="relative rounded border-2 border-[#3d372e] bg-[#1a1815] p-3 shadow-2xl">
+          <div className="hero-scene lg:col-span-5">
+            <div className="hero-3d-card relative rounded border-2 border-[#3d372e] bg-[#1a1815] p-3 shadow-2xl">
               {/* Photo Container with Crisp Border */}
               <div className="relative aspect-[4/3] overflow-hidden rounded border border-[#2b2721] bg-[#121110]">
                 <img
                   src="https://images.unsplash.com/photo-1579751626657-72bc17010498?auto=format&fit=crop&w=1200&q=85"
                   alt="Freshly stone-baked pizza at Pizza Station 1800"
-                  className="h-full w-full object-cover"
+                  className="hero-3d-image h-full w-full object-cover"
                 />
                 <div className="absolute left-3 top-3 border border-[#121110] bg-[#121110] px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-[#e5b342]">
                   Station Signature
@@ -110,9 +112,9 @@ export default function Home() {
       </section>
 
       {/* Solid Station Marquee Banner (Zero Gradients) */}
-      <div className="border-b border-[#2b2721] bg-[#e5b342] py-2.5 text-[#121110]">
+      <div className="station-marquee border-b border-[#2b2721] bg-[#e5b342] py-2.5 text-[#121110]">
         <div className="flex overflow-hidden whitespace-nowrap font-mono text-xs font-bold uppercase tracking-widest">
-          <div className="flex shrink-0 items-center gap-8 px-4">
+          <div className="station-marquee-track flex shrink-0 items-center gap-8 px-4">
             <span>PIZZA STATION 1800</span>
             <span>✦</span>
             <span>STONE-BAKED PIZZAS</span>
@@ -130,7 +132,7 @@ export default function Home() {
             <span>EAT · DRINK · ENJOY</span>
             <span>✦</span>
           </div>
-          <div className="flex shrink-0 items-center gap-8 px-4" aria-hidden="true">
+          <div className="station-marquee-track flex shrink-0 items-center gap-8 px-4" aria-hidden="true">
             <span>PIZZA STATION 1800</span>
             <span>✦</span>
             <span>STONE-BAKED PIZZAS</span>
@@ -152,7 +154,7 @@ export default function Home() {
       </div>
 
       {/* Section: Customer Favourites */}
-      <section className="container py-20">
+      <section data-scroll-reveal className="container py-20">
         <div className="mb-10 flex flex-col justify-between gap-4 border-b border-[#2b2721] pb-6 sm:flex-row sm:items-end">
           <div>
             <span className="eyebrow">From The Stone Hearth & Grill</span>
@@ -172,7 +174,7 @@ export default function Home() {
       </section>
 
       {/* Section: The Station Craft Bento Grid */}
-      <section className="border-y border-[#2b2721] bg-[#161412] py-20">
+      <section data-scroll-reveal className="border-y border-[#2b2721] bg-[#161412] py-20">
         <div className="container">
           <div className="mb-12 max-w-xl">
             <span className="eyebrow">The Station Standard</span>
@@ -184,9 +186,9 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="craft-grid grid gap-6 md:grid-cols-3">
             {/* Card 1 */}
-            <div className="flex flex-col justify-between rounded border border-[#2f2b25] bg-[#1b1917] p-6 sm:p-8">
+            <div data-scroll-reveal className="craft-card flex flex-col justify-between rounded border border-[#2f2b25] bg-[#1b1917] p-6 sm:p-8">
               <div>
                 <span className="station-stamp">PIZZA HERITAGE</span>
                 <h3 className="serif mt-4 text-2xl font-bold text-[#f6f1e8]">48-Hour Cold Ferment</h3>
@@ -200,7 +202,7 @@ export default function Home() {
             </div>
 
             {/* Card 2 */}
-            <div className="flex flex-col justify-between rounded border border-[#2f2b25] bg-[#1b1917] p-6 sm:p-8">
+            <div data-scroll-reveal className="craft-card flex flex-col justify-between rounded border border-[#2f2b25] bg-[#1b1917] p-6 sm:p-8">
               <div>
                 <span className="station-stamp">CHARCOAL & SPICE</span>
                 <h3 className="serif mt-4 text-2xl font-bold text-[#f6f1e8]">Smash Burgers & Dum Biryani</h3>
@@ -214,7 +216,7 @@ export default function Home() {
             </div>
 
             {/* Card 3 */}
-            <div className="flex flex-col justify-between rounded border border-[#2f2b25] bg-[#1b1917] p-6 sm:p-8">
+            <div data-scroll-reveal className="craft-card flex flex-col justify-between rounded border border-[#2f2b25] bg-[#1b1917] p-6 sm:p-8">
               <div>
                 <span className="station-stamp">DINE-IN TECH</span>
                 <h3 className="serif mt-4 text-2xl font-bold text-[#f6f1e8]">Instant Table QR Ordering</h3>
@@ -231,8 +233,8 @@ export default function Home() {
       </section>
 
       {/* Dine-In Station Table QR Banner */}
-      <section className="container py-16">
-        <div className="rounded border-2 border-[#3d372e] bg-[#1a1815] p-8 sm:p-12">
+      <section data-scroll-reveal className="container py-16">
+        <div className="depth-panel rounded border-2 border-[#3d372e] bg-[#1a1815] p-8 sm:p-12">
           <div className="grid items-center gap-8 md:grid-cols-12">
             <div className="md:col-span-8">
               <span className="station-stamp">TABLE SERVICE · 1800</span>
@@ -265,7 +267,7 @@ export default function Home() {
       </section>
 
       {/* Station Map & Visit Section */}
-      <section className="container pb-20">
+      <section data-scroll-reveal className="container pb-20">
         <div className="rounded border border-[#2b2721] bg-[#181614] p-8 sm:p-10">
           <div className="grid gap-8 lg:grid-cols-12">
             <div className="lg:col-span-5 flex flex-col justify-between">
@@ -326,6 +328,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      </ScrollReveal>
     </main>
   );
 }

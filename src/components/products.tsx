@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { ArrowUpRight, Check, Plus, UtensilsCrossed } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Pause, Play, Plus, UtensilsCrossed } from 'lucide-react';
 import { addCartItem } from '@/lib/cart';
 import { money, Product, productImageUrl } from '@/lib/menu';
 import { useCatalogProducts } from '@/lib/use-catalog-products';
@@ -33,7 +33,7 @@ export function ProductCard({ item }: { item: Product }) {
   }
 
   return (
-    <article className="group flex flex-col justify-between rounded border border-[#2f2b24] bg-[#181614] transition-colors duration-200 hover:border-[#e5b342]">
+    <article className="product-card-3d group flex flex-col justify-between rounded border border-[#2f2b24] bg-[#181614] transition-colors duration-200 hover:border-[#e5b342]">
       <div>
         <Link href={`/menu/${item.slug}`} className="relative block aspect-[1.3] overflow-hidden border-b border-[#2b2721] bg-[#141210]">
           {item.image ? (
@@ -151,6 +151,27 @@ export function ProductGrid({ items }: { items: Product[] }) {
 
 export function FeaturedProducts() {
   const catalog = useCatalogProducts();
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
+
+  const items = catalog.status === 'ready'
+    ? [
+        ...catalog.products.filter((product) => product.badge === 'Featured'),
+        ...catalog.products.filter((product) => product.badge !== 'Featured'),
+      ].slice(0, 3)
+    : [];
+
+  useEffect(() => {
+    if (!autoPlay || paused || items.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const timer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % items.length);
+    }, 5000);
+
+    return () => window.clearInterval(timer);
+  }, [activeIndex, autoPlay, items.length, paused]);
+
   if (catalog.status === 'loading') {
     return (
       <div className="rounded border border-[#2b2721] bg-[#181614] p-10 text-center font-mono text-xs text-[#9e988e]">
@@ -165,13 +186,78 @@ export function FeaturedProducts() {
       </div>
     );
   }
-  const items = [
-    ...catalog.products.filter((product) => product.badge === 'Featured'),
-    ...catalog.products.filter((product) => product.badge !== 'Featured'),
-  ].slice(0, 3);
-
   return items.length ? (
-    <ProductGrid items={items} />
+    <div
+      className="product-carousel"
+      role="region"
+      aria-label="Featured dishes"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setPaused(false);
+      }}
+    >
+      <div className="product-carousel-stage">
+        {items.map((item, index) => {
+          const offset = (index - activeIndex + items.length + Math.floor(items.length / 2)) % items.length - Math.floor(items.length / 2);
+
+          return (
+            <div
+              className="product-carousel-card"
+              key={item.id ?? item.slug}
+              style={{
+                transform: `translate(-50%, -50%) translateX(${offset * 76}%) translateZ(${offset === 0 ? 70 : -55}px) rotateY(${offset * -28}deg) scale(${offset === 0 ? 1 : 0.84})`,
+                opacity: Math.abs(offset) > 1 ? 0 : 1,
+                zIndex: items.length - Math.abs(offset),
+                pointerEvents: Math.abs(offset) > 1 ? 'none' : 'auto',
+              }}
+              aria-current={offset === 0 ? 'true' : undefined}
+            >
+              <ProductCard item={item} />
+            </div>
+          );
+        })}
+      </div>
+      <div className="product-carousel-controls">
+        <button
+          type="button"
+          className="product-carousel-arrow"
+          onClick={() => setActiveIndex((current) => (current - 1 + items.length) % items.length)}
+          aria-label="Previous featured dish"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <div className="product-carousel-dots" role="group" aria-label="Choose a featured dish">
+          {items.map((item, index) => (
+            <button
+              type="button"
+              key={item.id ?? item.slug}
+              className={`product-carousel-dot${index === activeIndex ? ' is-active' : ''}`}
+              onClick={() => setActiveIndex(index)}
+              aria-label={`Show ${item.name}`}
+              aria-current={index === activeIndex ? 'true' : undefined}
+            />
+          ))}
+        </div>
+        <button
+          type="button"
+          className="product-carousel-arrow"
+          onClick={() => setActiveIndex((current) => (current + 1) % items.length)}
+          aria-label="Next featured dish"
+        >
+          <ArrowRight size={18} />
+        </button>
+        <button
+          type="button"
+          className="product-carousel-arrow"
+          onClick={() => setAutoPlay((playing) => !playing)}
+          aria-label={autoPlay ? 'Pause carousel rotation' : 'Resume carousel rotation'}
+        >
+          {autoPlay ? <Pause size={16} /> : <Play size={16} />}
+        </button>
+      </div>
+    </div>
   ) : (
     <div className="rounded border border-[#2b2721] bg-[#181614] p-10 text-center font-mono text-xs text-[#9e988e]">
       Station kitchen favourites will appear here once loaded.
