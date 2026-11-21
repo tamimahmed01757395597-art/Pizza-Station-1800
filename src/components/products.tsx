@@ -1,78 +1,180 @@
 'use client';
 
 import Link from 'next/link';
-import {useState} from 'react';
-import {ArrowUpRight,Plus} from 'lucide-react';
-import {addCartItem} from '@/lib/cart';
-import {money,Product,productImageUrl} from '@/lib/menu';
-import {useCatalogProducts} from '@/lib/use-catalog-products';
+import { useState } from 'react';
+import { ArrowUpRight, Check, Plus, UtensilsCrossed } from 'lucide-react';
+import { addCartItem } from '@/lib/cart';
+import { money, Product, productImageUrl } from '@/lib/menu';
+import { useCatalogProducts } from '@/lib/use-catalog-products';
 
-export function ProductCard({item}:{item:Product}) {
-  const [added,setAdded]=useState(false);
-  const [error,setError]=useState('');
-  const needsOptions=Boolean(item.variants?.length||item.addons?.length);
+export function ProductCard({ item }: { item: Product }) {
+  const [added, setAdded] = useState(false);
+  const [error, setError] = useState('');
+  const needsOptions = Boolean(item.variants?.length || item.addons?.length);
 
   function add() {
-    if(!item.id||needsOptions)return;
-    const result=addCartItem({
-      product_id:item.id,
-      slug:item.slug,
-      name:item.name,
-      price:item.price,
-      qty:1,
-      image:item.image??'',
-      addon_ids:[],
+    if (!item.id || needsOptions) return;
+    const result = addCartItem({
+      product_id: item.id,
+      slug: item.slug,
+      name: item.name,
+      price: item.price,
+      qty: 1,
+      image: item.image ?? '',
+      addon_ids: [],
     });
-    if(!result.ok) {
+    if (!result.ok) {
       setError(result.error);
       return;
     }
     setError('');
     setAdded(true);
-    setTimeout(()=>setAdded(false),1100);
+    setTimeout(() => setAdded(false), 1200);
   }
 
   return (
-    <article className="panel group overflow-hidden">
-      <Link href={`/menu/${item.slug}`} className="relative block aspect-[1.26] overflow-hidden">
-        {item.image
-          ? <img src={productImageUrl(item.image)} alt={item.name} className="h-full w-full object-cover transition duration-500 group-hover:scale-105"/>
-          : <div className="flex h-full flex-col items-center justify-center gap-2 bg-[radial-gradient(ellipse_at_top_right,#6f251a,#201513_60%,#111110)] p-6 text-center"><span className="eyebrow">{item.category}</span><span className="font-serif text-2xl text-[#f1d8a1]">{item.name}</span></div>}
-        {item.badge&&<span className="absolute left-3 top-3 rounded-full bg-[#111]/85 px-3 py-1 text-[10px] font-semibold tracking-wide text-[#e7b84b]">{item.badge}</span>}
-        <span className="absolute bottom-3 right-3 rounded-full bg-black/65 p-2"><ArrowUpRight size={15}/></span>
-      </Link>
-      <div className="p-4">
-        <p className="eyebrow !text-[9px]">{item.category}</p>
-        <Link href={`/menu/${item.slug}`}><h3 className="mt-1 text-xl">{item.name}</h3></Link>
-        <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-[#aaa69c]">{item.description}</p>
-        <div className="mt-4 flex items-center justify-between">
-          <strong className="text-sm">{money(item.price)}</strong>
-          {item.id&&needsOptions
-            ? <Link href={`/menu/${item.slug}`} className="rounded-full bg-[#e7b84b] px-4 py-2 text-xs font-bold text-[#17140b] hover:bg-[#f3cf78]">Choose options</Link>
-            : <button
-                onClick={add}
-                disabled={!item.id}
-                className="rounded-full bg-[#e7b84b] px-4 py-2 text-xs font-bold text-[#17140b] hover:bg-[#f3cf78] disabled:cursor-not-allowed disabled:bg-[#514a39] disabled:text-[#b9ac8d]"
-                aria-label={`Add ${item.name} to cart`}
-                title={!item.id?'Ordering requires the connected menu':undefined}
-              >
-                {added?'Added ✓':item.id?<span className="flex items-center gap-1"><Plus size={14}/> Add</span>:'Unavailable'}
-              </button>}
+    <article className="group flex flex-col justify-between rounded border border-[#2f2b24] bg-[#181614] transition-colors duration-200 hover:border-[#e5b342]">
+      <div>
+        <Link href={`/menu/${item.slug}`} className="relative block aspect-[1.3] overflow-hidden border-b border-[#2b2721] bg-[#141210]">
+          {item.image ? (
+            <img
+              src={productImageUrl(item.image)}
+              alt={item.name}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-2 bg-[#211a17] p-6 text-center text-[#d5ccbe]">
+              <div className="flex h-10 w-10 items-center justify-center rounded border border-[#453a32] bg-[#181311] text-[#e5b342]">
+                <UtensilsCrossed size={18} />
+              </div>
+              <span className="font-mono text-[10px] uppercase tracking-widest text-[#e5b342]">{item.category}</span>
+              <span className="serif text-xl font-bold text-[#f6f1e8]">{item.name}</span>
+            </div>
+          )}
+
+          {/* Solid Badges */}
+          {item.badge && (
+            <span className="absolute left-3 top-3 border border-[#e5b342] bg-[#141311] px-2.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[#e5b342]">
+              {item.badge}
+            </span>
+          )}
+
+          <span className="absolute bottom-3 right-3 flex h-7 w-7 items-center justify-center rounded border border-[#3d372e] bg-[#121110] text-[#f6f1e8] opacity-90 transition-transform group-hover:scale-110">
+            <ArrowUpRight size={14} />
+          </span>
+        </Link>
+
+        <div className="p-4 sm:p-5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#e5b342]">
+              {item.category}
+            </span>
+            {item.variants && item.variants.length > 0 && (
+              <span className="font-mono text-[10px] text-[#8e877c]">
+                {item.variants.length} Sizes
+              </span>
+            )}
+          </div>
+
+          <Link href={`/menu/${item.slug}`}>
+            <h3 className="serif mt-1.5 text-lg font-bold text-[#f6f1e8] transition-colors group-hover:text-[#e5b342]">
+              {item.name}
+            </h3>
+          </Link>
+
+          <p className="mt-2 line-clamp-2 min-h-10 text-xs leading-5 text-[#9e988e]">
+            {item.description}
+          </p>
         </div>
-        {error&&<p role="alert" className="mt-3 text-xs text-[#ef8a7d]">{error}</p>}
+      </div>
+
+      <div className="border-t border-[#25221d] p-4 sm:p-5 pt-3">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <span className="block font-mono text-[9px] uppercase tracking-wider text-[#736c61]">
+              {item.variants?.length ? 'Starts from' : 'Price'}
+            </span>
+            <strong className="font-mono text-base font-bold text-[#f6f1e8]">
+              {money(item.price)}
+            </strong>
+          </div>
+
+          {item.id && needsOptions ? (
+            <Link
+              href={`/menu/${item.slug}`}
+              className="inline-flex items-center gap-1 rounded bg-[#27231d] px-3.5 py-2 text-xs font-bold uppercase tracking-wider text-[#e5b342] border border-[#3e372b] transition-colors hover:bg-[#e5b342] hover:text-[#121110]"
+            >
+              Choose Options
+            </Link>
+          ) : (
+            <button
+              onClick={add}
+              disabled={!item.id}
+              className={`inline-flex items-center gap-1 rounded px-3.5 py-2 text-xs font-bold uppercase tracking-wider transition-colors disabled:cursor-not-allowed disabled:bg-[#25221e] disabled:text-[#666055] ${
+                added
+                  ? 'border border-[#3ecf8e] bg-[#1a2e22] text-[#3ecf8e]'
+                  : 'border border-[#e5b342] bg-[#e5b342] text-[#121110] hover:bg-[#f1c35b]'
+              }`}
+              aria-label={`Add ${item.name} to order`}
+              title={!item.id ? 'Ordering requires the connected menu' : undefined}
+            >
+              {added ? (
+                <>
+                  <Check size={14} /> Added
+                </>
+              ) : item.id ? (
+                <>
+                  <Plus size={14} /> Add
+                </>
+              ) : (
+                'Unavailable'
+              )}
+            </button>
+          )}
+        </div>
+        {error && <p role="alert" className="mt-2 font-mono text-xs text-[#ef8a7d]">{error}</p>}
       </div>
     </article>
   );
 }
 
-export function ProductGrid({items}:{items:Product[]}) {
-  return <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{items.map(product=><ProductCard item={product} key={product.id??product.slug}/>)}</div>;
+export function ProductGrid({ items }: { items: Product[] }) {
+  return (
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((product) => (
+        <ProductCard item={product} key={product.id ?? product.slug} />
+      ))}
+    </div>
+  );
 }
 
 export function FeaturedProducts() {
-  const catalog=useCatalogProducts();
-  if(catalog.status==='loading')return <p role="status" className="text-sm text-[#aaa69a]">Loading the menu…</p>;
-  if(catalog.status==='unavailable')return <p role="status" className="text-sm text-[#aaa69a]">Connect Supabase and apply the restaurant menu migration to show the current menu here.</p>;
-  const items=[...catalog.products.filter(product=>product.badge==='Featured'),...catalog.products.filter(product=>product.badge!=='Featured')].slice(0,3);
-  return items.length?<ProductGrid items={items}/>:<p className="text-sm text-[#aaa69a]">Menu favourites will appear here.</p>;
+  const catalog = useCatalogProducts();
+  if (catalog.status === 'loading') {
+    return (
+      <div className="rounded border border-[#2b2721] bg-[#181614] p-10 text-center font-mono text-xs text-[#9e988e]">
+        Scanning station menu items…
+      </div>
+    );
+  }
+  if (catalog.status === 'unavailable') {
+    return (
+      <div className="rounded border border-[#3d3224] bg-[#1e1b16] p-8 text-center text-xs text-[#d8caad]">
+        Connect Supabase and apply the restaurant menu migration to show the live menu favourites here.
+      </div>
+    );
+  }
+  const items = [
+    ...catalog.products.filter((product) => product.badge === 'Featured'),
+    ...catalog.products.filter((product) => product.badge !== 'Featured'),
+  ].slice(0, 3);
+
+  return items.length ? (
+    <ProductGrid items={items} />
+  ) : (
+    <div className="rounded border border-[#2b2721] bg-[#181614] p-10 text-center font-mono text-xs text-[#9e988e]">
+      Station kitchen favourites will appear here once loaded.
+    </div>
+  );
 }

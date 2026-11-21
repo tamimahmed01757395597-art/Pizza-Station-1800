@@ -66,22 +66,63 @@ export function TableQrEntry({ initialToken }: { initialToken?: string }) {
   }, [initialToken, router]);
 
   return (
-    <main className="container min-h-[55vh] py-16">
-      <section className="panel mx-auto max-w-xl p-8">
-        <p className="eyebrow">Dine in</p>
-        {status === 'checking' && <>
-          <h1 className="mt-2 text-4xl">Checking your table…</h1>
-          <p role="status" className="mt-4 text-[#aaa69a]">Verifying the table QR and its open service session.</p>
-        </>}
-        {status === 'valid' && <>
-          <h1 className="mt-2 text-4xl">Welcome to {tableNumber}.</h1>
-          <p role="status" className="mt-4 text-[#aaa69a]">Your table is verified. Opening the menu…</p>
-          <Link href="/table-menu" className="btn mt-6">Continue to table menu</Link>
-        </>}
-        {status === 'invalid' && <>
-          <h1 className="mt-2 text-4xl">Table unavailable.</h1>
-          <p role="alert" className="mt-4 text-[#aaa69a]">{message}</p>
-        </>}
+    <main className="container min-h-[55vh] py-16 text-[#f6f1e8]">
+      <section className="mx-auto max-w-xl rounded border-2 border-[#38332a] bg-[#181614] p-8 sm:p-10 shadow-2xl">
+        <div className="flex items-center gap-2">
+          <span className="station-tag">DINE-IN PLATFORM</span>
+          <span className="font-mono text-xs text-[#8e877c]">STATION 1800</span>
+        </div>
+
+        {status === 'checking' && (
+          <div className="mt-4">
+            <h1 className="serif text-3xl font-bold sm:text-4xl text-[#f6f1e8]">
+              Verifying Your Table…
+            </h1>
+            <p role="status" className="mt-3 font-mono text-xs leading-relaxed text-[#c4bdae]">
+              Checking table security token and active station kitchen session.
+            </p>
+            <div className="mt-6 flex items-center gap-2 font-mono text-xs text-[#e5b342]">
+              <span className="h-2 w-2 rounded-full bg-[#e5b342] animate-pulse" />
+              <span>Contacting table dispatcher…</span>
+            </div>
+          </div>
+        )}
+
+        {status === 'valid' && (
+          <div className="mt-4">
+            <span className="station-stamp">TABLE VERIFIED</span>
+            <h1 className="serif mt-3 text-3xl font-bold sm:text-4xl text-[#f6f1e8]">
+              Welcome to {tableNumber}.
+            </h1>
+            <p role="status" className="mt-3 font-mono text-xs leading-relaxed text-[#c4bdae]">
+              Your table is active and verified. Redirecting you to the live dining menu…
+            </p>
+            <div className="mt-6">
+              <Link href="/table-menu" className="btn text-xs font-bold uppercase tracking-wider">
+                Open Table Menu Now
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {status === 'invalid' && (
+          <div className="mt-4">
+            <span className="inline-block px-2 py-0.5 border border-[#c83327] bg-[#221514] font-mono text-xs text-[#ef8a7d]">
+              TABLE UNAVAILABLE
+            </span>
+            <h1 className="serif mt-3 text-3xl font-bold sm:text-4xl text-[#f6f1e8]">
+              Session Not Verified
+            </h1>
+            <p role="alert" className="mt-3 font-mono text-xs leading-relaxed text-[#ef8a7d]">
+              {message}
+            </p>
+            <div className="mt-6 flex gap-3">
+              <Link href="/menu" className="btn text-xs font-bold uppercase tracking-wider">
+                Browse Public Menu
+              </Link>
+            </div>
+          </div>
+        )}
       </section>
     </main>
   );

@@ -775,7 +775,7 @@ function ReportWorkspace() {
         {sales.length ? <div className="flex h-56 items-end gap-2 border-b border-white/10 px-2">
           {sales.map((item) => <div key={text(item, 'day')} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
             <span className="text-[10px] text-[#aaa69a]">{money(Number(item.sales ?? 0))}</span>
-            <div className="w-full max-w-12 rounded-t-md bg-gradient-to-t from-[#c9342e] to-[#e7b84b]" style={{ height: `${Math.max(3, (Number(item.sales ?? 0) / maxSales) * 70)}%` }} />
+            <div className="w-full max-w-12 rounded-t-md bg-[#e7b84b] hover:bg-[#c9342e] transition-colors" style={{ height: `${Math.max(3, (Number(item.sales ?? 0) / maxSales) * 70)}%` }} />
             <span className="text-[10px] text-[#8f8b82]">{new Date(text(item, 'day')).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
           </div>)}
         </div> : <Empty>No sales for this period.</Empty>}

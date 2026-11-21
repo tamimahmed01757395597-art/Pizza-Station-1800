@@ -57,6 +57,6 @@ export function TableOrderStatus() {
   if (pathname === '/table' || pathname.startsWith('/table/') || pathname.startsWith('/table-menu')) return null;
   if (!tableNumber && !message) return null;
   return tableNumber
-    ? <div role="status" className="border-b border-[#e7b84b]/20 bg-[#e7b84b]/10 px-4 py-2 text-center text-sm text-[#e9d6a2]">Dine-in ordering · {tableDisplayLabel(tableNumber)}</div>
-    : <div role="alert" className="border-b border-[#ef8a7d]/20 bg-[#ef8a7d]/10 px-4 py-2 text-center text-sm text-[#ef8a7d]">{message}</div>;
+    ? <div role="status" className="border-b border-[#38332a] bg-[#1e1b16] px-4 py-2 text-center font-mono text-xs text-[#e5b342]"><span className="inline-block h-1.5 w-1.5 rounded-full bg-[#3ecf8e] mr-2"></span>Dine-In Session Active · <strong className="text-[#f6f1e8]">{tableDisplayLabel(tableNumber)}</strong></div>
+    : <div role="alert" className="border-b border-[#5a221d] bg-[#221514] px-4 py-2 text-center font-mono text-xs text-[#ef8a7d]">{message}</div>;
 }

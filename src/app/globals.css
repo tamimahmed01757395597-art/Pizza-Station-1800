@@ -1,5 +1,238 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..800;1,9..40,400..800&family=Playfair+Display:ital,wght@0,500..800;1,500..800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
 @import 'tailwindcss';
-:root{--ink:#111110;--panel:#1b1b19;--gold:#e7b84b;--tomato:#b92e25;--muted:#a6a29a}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--ink);color:#f5f1e8;font-family:'DM Sans',sans-serif}h1,h2,h3,.serif{font-family:'Playfair Display',serif}a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}.container{width:min(1180px,calc(100% - 44px));margin:auto}.gold{color:var(--gold)}.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 20px;border:1px solid var(--gold);border-radius:999px;background:var(--gold);color:#17140b;font-weight:700;cursor:pointer;transition:.2s}.btn:hover{background:#f2cb6b;transform:translateY(-1px)}.btn.secondary{background:transparent;color:#f5f1e8;border-color:#555}.eyebrow{text-transform:uppercase;letter-spacing:.18em;font-size:11px;color:var(--gold);font-weight:700}.muted{color:var(--muted)}.panel{background:var(--panel);border:1px solid #30302c;border-radius:16px}.field{width:100%;background:#121211;border:1px solid #45443f;border-radius:9px;padding:13px;color:#fff;outline:none}.field:focus{border-color:var(--gold)}
 
-@media print{body *{visibility:hidden!important}.print-card,.print-card *{visibility:visible!important}.print-card{position:absolute;inset:0 auto auto 0;width:100%;margin:0!important;border:0!important;background:#fff!important;color:#111!important;box-shadow:none!important}.print-card img{margin:auto}}
+:root {
+  --ink: #121110;
+  --ink-dark: #0a0a09;
+  --panel: #1b1917;
+  --panel-elevated: #23201d;
+  --panel-border: #353029;
+  --panel-border-subtle: #26231e;
+  --gold: #e5b342;
+  --gold-hover: #f1c35b;
+  --gold-dark: #997423;
+  --gold-tint: #2a2313;
+  --tomato: #c83327;
+  --tomato-hover: #df3e31;
+  --tomato-tint: #2c1614;
+  --cream: #f6f1e8;
+  --cream-soft: #eae3d5;
+  --muted: #9e988e;
+  --muted-dark: #6e685f;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--ink);
+}
+
+body {
+  margin: 0;
+  background-color: var(--ink);
+  color: var(--cream);
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .serif {
+  font-family: 'Playfair Display', Georgia, serif;
+  letter-spacing: -0.015em;
+}
+
+.mono {
+  font-family: 'Space Mono', monospace;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+.container {
+  width: min(1200px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+.gold {
+  color: var(--gold);
+}
+
+.tomato {
+  color: var(--tomato);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: 'Space Mono', monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  background-color: var(--gold);
+  color: #121110;
+  border: 1px solid var(--gold);
+  text-decoration: none;
+}
+
+.btn:hover {
+  background-color: var(--gold-hover);
+  border-color: var(--gold-hover);
+  transform: translateY(-1px);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn.secondary {
+  background-color: #1a1816;
+  color: var(--cream);
+  border: 1px solid var(--panel-border);
+}
+
+.btn.secondary:hover {
+  background-color: #24211d;
+  border-color: var(--gold);
+  color: #ffffff;
+}
+
+.btn.tomato-btn {
+  background-color: var(--tomato);
+  color: #ffffff;
+  border-color: var(--tomato);
+}
+
+.btn.tomato-btn:hover {
+  background-color: var(--tomato-hover);
+  border-color: var(--tomato-hover);
+}
+
+.panel {
+  background-color: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+}
+
+.panel-elevated {
+  background-color: var(--panel-elevated);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+}
+
+.field {
+  width: 100%;
+  background-color: #141312;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  padding: 12px 14px;
+  color: var(--cream);
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.field:focus {
+  border-color: var(--gold);
+  background-color: #181614;
+}
+
+/* Authentic Station Docket and Ticket Details */
+.ticket-edge {
+  border-style: dashed;
+  border-color: var(--panel-border);
+}
+
+.station-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background-color: #1e1b18;
+  border: 1px solid #3d372e;
+  border-radius: 3px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+}
+
+.station-stamp {
+  display: inline-block;
+  padding: 2px 8px;
+  border: 1px solid var(--gold);
+  border-radius: 2px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--gold);
+}
+
+/* Custom scrollbars for menus */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #121110;
+}
+::-webkit-scrollbar-thumb {
+  background: #2e2b26;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #423d34;
+}
+
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .print-card, .print-card * {
+    visibility: visible !important;
+  }
+  .print-card {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    margin: 0 !important;
+    border: 0 !important;
+    background: #fff !important;
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+  .print-card img {
+    margin: auto;
+  }
+}

@@ -1,48 +1,66 @@
 'use client';
 
 import Link from 'next/link';
-import {useParams} from 'next/navigation';
-import {useEffect,useMemo,useState} from 'react';
-import {addCartItem} from '@/lib/cart';
-import {money,productImageUrl} from '@/lib/menu';
-import {useCatalogProducts} from '@/lib/use-catalog-products';
+import { useParams } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Check, Minus, Plus, UtensilsCrossed } from 'lucide-react';
+import { addCartItem } from '@/lib/cart';
+import { money, productImageUrl } from '@/lib/menu';
+import { useCatalogProducts } from '@/lib/use-catalog-products';
 
 export default function ProductDetail() {
-  const {slug}=useParams<{slug:string}>();
-  const catalog=useCatalogProducts();
-  const product=catalog.products.find(item=>item.slug===slug);
-  const [variantId,setVariantId]=useState('');
-  const [addonIds,setAddonIds]=useState<string[]>([]);
-  const [quantity,setQuantity]=useState(1);
-  const [cartError,setCartError]=useState('');
+  const { slug } = useParams<{ slug: string }>();
+  const catalog = useCatalogProducts();
+  const product = catalog.products.find((item) => item.slug === slug);
+  const [variantId, setVariantId] = useState('');
+  const [addonIds, setAddonIds] = useState<string[]>([]);
+  const [quantity, setQuantity] = useState(1);
+  const [cartError, setCartError] = useState('');
 
-  const variants=useMemo(()=>product?.variants?.filter(variant=>variant.is_available)??[],[product]);
-  const addons=useMemo(()=>product?.addons?.filter(addon=>addon.is_available)??[],[product]);
-  const selectedVariant=variants.find(variant=>variant.id===variantId);
-  const selectedAddons=addons.filter(addon=>addonIds.includes(addon.id));
-  const estimate=(product?.price??0)+(selectedVariant?.price_delta??0)+selectedAddons.reduce((sum,addon)=>sum+addon.price,0);
+  const variants = useMemo(() => product?.variants?.filter((variant) => variant.is_available) ?? [], [product]);
+  const addons = useMemo(() => product?.addons?.filter((addon) => addon.is_available) ?? [], [product]);
+  const selectedVariant = variants.find((variant) => variant.id === variantId);
+  const selectedAddons = addons.filter((addon) => addonIds.includes(addon.id));
+  const estimate = (product?.price ?? 0) + (selectedVariant?.price_delta ?? 0) + selectedAddons.reduce((sum, addon) => sum + addon.price, 0);
 
-  useEffect(()=>{
-    setVariantId(product?.variants?.find(variant=>variant.is_available)?.id??'');
+  useEffect(() => {
+    setVariantId(product?.variants?.find((variant) => variant.is_available)?.id ?? '');
     setAddonIds([]);
     setCartError('');
-  },[product?.id]);
+  }, [product?.id]);
 
-  if(!product)return <main className="container py-24"><h1>{catalog.status==='loading'?'Loading menu item…':catalog.status==='unavailable'?'Menu temporarily unavailable':'Menu item not found'}</h1><Link href="/menu" className="gold">Back to menu</Link></main>;
+  if (!product) {
+    return (
+      <main className="container py-24 text-center font-mono text-[#f6f1e8]">
+        <h1 className="serif text-3xl font-bold">
+          {catalog.status === 'loading'
+            ? 'Accessing station menu item…'
+            : catalog.status === 'unavailable'
+            ? 'Station menu temporarily unavailable'
+            : 'Menu item not found'}
+        </h1>
+        <div className="mt-6">
+          <Link href="/menu" className="btn secondary text-xs uppercase tracking-wider">
+            <ArrowLeft size={14} /> Back to Full Menu
+          </Link>
+        </div>
+      </main>
+    );
+  }
 
   function add() {
-    if(!product?.id)return;
-    const result=addCartItem({
-      product_id:product.id,
-      ...(selectedVariant?{variant_id:selectedVariant.id}:{}),
-      addon_ids:addonIds,
-      slug:product.slug,
-      name:`${product.name}${selectedVariant?` (${selectedVariant.name})`:''}${selectedAddons.length?` + ${selectedAddons.map(addon=>addon.name).join(', ')}`:''}`,
-      price:estimate,
-      qty:quantity,
-      image:product.image??'',
+    if (!product?.id) return;
+    const result = addCartItem({
+      product_id: product.id,
+      ...(selectedVariant ? { variant_id: selectedVariant.id } : {}),
+      addon_ids: addonIds,
+      slug: product.slug,
+      name: `${product.name}${selectedVariant ? ` (${selectedVariant.name})` : ''}${selectedAddons.length ? ` + ${selectedAddons.map((addon) => addon.name).join(', ')}` : ''}`,
+      price: estimate,
+      qty: quantity,
+      image: product.image ?? '',
     });
-    if(!result.ok) {
+    if (!result.ok) {
       setCartError(result.error);
       return;
     }
@@ -50,45 +68,211 @@ export default function ProductDetail() {
   }
 
   return (
-    <main className="container grid gap-10 py-12 md:grid-cols-2">
-      {product.image
-        ? <img className="max-h-[560px] w-full rounded-2xl object-cover" src={productImageUrl(product.image)} alt={product.name}/>
-        : <div className="flex min-h-[360px] flex-col items-center justify-center rounded-2xl bg-[radial-gradient(ellipse_at_top_right,#6f251a,#201513_60%,#111110)] p-8 text-center"><p className="eyebrow">{product.category}</p><p className="mt-3 font-serif text-4xl text-[#f1d8a1]">{product.name}</p></div>}
-      <div className="py-5">
-        <p className="eyebrow">{product.category}</p>
-        <h1 className="mt-2 text-5xl">{product.name}</h1>
-        <p className="mt-4 leading-7 text-[#aaa69a]">{product.description}</p>
-        <p className="mt-5 text-2xl font-bold gold">From {money(product.price)}</p>
-        {!!variants.length&&<fieldset className="mt-8">
-          <legend className="mb-3 text-sm font-semibold">Choose an option</legend>
-          <div className="grid gap-2">
-            {variants.map(variant=><label key={variant.id} className={`flex cursor-pointer items-center justify-between rounded-lg border px-4 py-3 text-sm ${variantId===variant.id?'border-[#e7b84b] text-[#e7b84b]':'border-white/20'}`}>
-              <span className="flex items-center gap-3"><input type="radio" name="product-variant" checked={variantId===variant.id} onChange={()=>setVariantId(variant.id)} className="accent-[#e7b84b]"/>{variant.name}</span>
-              <span>{money(product.price+variant.price_delta)}</span>
-            </label>)}
-          </div>
-        </fieldset>}
+    <main className="container py-12 text-[#f6f1e8]">
+      {/* Breadcrumbs */}
+      <div className="mb-8 flex items-center gap-2 font-mono text-xs text-[#8e877c]">
+        <Link href="/menu" className="hover:text-[#e5b342] transition-colors">
+          Menu
+        </Link>
+        <span>/</span>
+        <span className="text-[#a69f92]">{product.category}</span>
+        <span>/</span>
+        <span className="text-[#e5b342]">{product.name}</span>
+      </div>
 
-        {!!addons.length&&<fieldset className="mt-7">
-          <legend className="mb-3 text-sm font-semibold">Add a little extra</legend>
-          {addons.map(addon=><label key={addon.id} className="mb-2 flex items-center justify-between gap-3 text-sm">
-            <span className="flex items-center gap-3"><input type="checkbox" checked={addonIds.includes(addon.id)} onChange={event=>setAddonIds(event.target.checked?[...addonIds,addon.id]:addonIds.filter(id=>id!==addon.id))} className="accent-[#e7b84b]"/>{addon.name}</span>
-            <span className="text-[#aaa69a]">+ {money(addon.price)}</span>
-          </label>)}
-        </fieldset>}
+      <div className="grid gap-12 lg:grid-cols-12">
+        {/* Left Column: Image or Solid Brand Frame (Zero Gradients) */}
+        <div className="lg:col-span-6">
+          <div className="rounded border-2 border-[#38332a] bg-[#1a1815] p-3 shadow-xl">
+            <div className="relative aspect-square overflow-hidden rounded border border-[#2b2721] bg-[#141210]">
+              {product.image ? (
+                <img
+                  className="h-full w-full object-cover"
+                  src={productImageUrl(product.image)}
+                  alt={product.name}
+                />
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-3 bg-[#231b17] p-8 text-center text-[#d5ccbe]">
+                  <div className="flex h-14 w-14 items-center justify-center rounded border border-[#4a3e35] bg-[#181311] text-[#e5b342]">
+                    <UtensilsCrossed size={28} />
+                  </div>
+                  <span className="station-stamp">{product.category}</span>
+                  <h2 className="serif text-3xl font-bold text-[#f6f1e8]">{product.name}</h2>
+                  <span className="font-mono text-xs text-[#8e877c]">Pizza Station 1800 · Freshly Prepared</span>
+                </div>
+              )}
 
-        <div className="mt-7 flex items-center gap-4">
-          <div className="flex items-center rounded-full border border-white/20">
-            <button className="px-4 py-2" onClick={()=>setQuantity(Math.max(1,quantity-1))} aria-label="Decrease quantity">−</button>
-            <span>{quantity}</span>
-            <button className="px-4 py-2" onClick={()=>setQuantity(Math.min(20,quantity+1))} aria-label="Increase quantity">+</button>
+              {product.badge && (
+                <span className="absolute left-4 top-4 border border-[#e5b342] bg-[#141311] px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-wider text-[#e5b342]">
+                  {product.badge}
+                </span>
+              )}
+            </div>
+
+            <div className="mt-4 flex items-center justify-between border-t border-[#292520] pt-3 font-mono text-xs text-[#8e877c]">
+              <span>PREPARED FRESH TO ORDER</span>
+              <span className="text-[#e5b342]">100% HALAL</span>
+            </div>
           </div>
-          <button onClick={add} disabled={!product.id} className="btn flex-1 disabled:cursor-not-allowed disabled:opacity-50">
-            {product.id?`Add to order · ${money(estimate*quantity)}`:'Ordering unavailable'}
-          </button>
         </div>
-        {cartError&&<p role="alert" className="mt-3 text-sm text-[#ef8a7d]">{cartError}</p>}
-        <p className="mt-4 text-xs text-[#888]">Price preview only. Final price and availability are confirmed by the server at checkout.</p>
+
+        {/* Right Column: Customizer & Details */}
+        <div className="lg:col-span-6 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="station-tag">{product.category}</span>
+              <span className="font-mono text-xs text-[#8e877c]">PLATFORM 1800</span>
+            </div>
+
+            <h1 className="serif mt-3 text-3xl font-bold sm:text-5xl text-[#f6f1e8]">
+              {product.name}
+            </h1>
+
+            <p className="mt-4 text-sm leading-relaxed text-[#c4bdae]">
+              {product.description}
+            </p>
+
+            <div className="mt-6 flex items-baseline gap-3 border-y border-[#2b2721] py-4">
+              <span className="font-mono text-xs uppercase tracking-wider text-[#8e877c]">Price:</span>
+              <strong className="font-mono text-2xl font-bold text-[#e5b342]">
+                {money(estimate)}
+              </strong>
+              {variants.length > 0 && (
+                <span className="font-mono text-xs text-[#6e685f]">
+                  (Varies with selected size / crust)
+                </span>
+              )}
+            </div>
+
+            {/* Variants Radio Group */}
+            {Boolean(variants.length) && (
+              <fieldset className="mt-8">
+                <legend className="font-mono text-xs font-bold uppercase tracking-wider text-[#c4bdae] mb-3">
+                  1. Select Size / Portion:
+                </legend>
+                <div className="grid gap-2">
+                  {variants.map((variant) => {
+                    const isSelected = variantId === variant.id;
+                    return (
+                      <label
+                        key={variant.id}
+                        className={`flex cursor-pointer items-center justify-between rounded border p-3.5 transition-colors font-mono text-xs ${
+                          isSelected
+                            ? 'border-[#e5b342] bg-[#221c13] text-[#f6f1e8]'
+                            : 'border-[#2f2b25] bg-[#181614] text-[#c4bdae] hover:border-[#4d4436]'
+                        }`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="product-variant"
+                            checked={isSelected}
+                            onChange={() => setVariantId(variant.id)}
+                            className="accent-[#e5b342]"
+                          />
+                          <span className="font-bold">{variant.name}</span>
+                        </span>
+                        <span className="text-[#e5b342] font-bold">
+                          {money(product.price + variant.price_delta)}
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            )}
+
+            {/* Addons Checkbox Group */}
+            {Boolean(addons.length) && (
+              <fieldset className="mt-7">
+                <legend className="font-mono text-xs font-bold uppercase tracking-wider text-[#c4bdae] mb-3">
+                  2. Extras & Toppings:
+                </legend>
+                <div className="grid gap-2">
+                  {addons.map((addon) => {
+                    const isSelected = addonIds.includes(addon.id);
+                    return (
+                      <label
+                        key={addon.id}
+                        className={`flex cursor-pointer items-center justify-between rounded border p-3 transition-colors font-mono text-xs ${
+                          isSelected
+                            ? 'border-[#e5b342] bg-[#221c13] text-[#f6f1e8]'
+                            : 'border-[#2f2b25] bg-[#181614] text-[#c4bdae] hover:border-[#4d4436]'
+                        }`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(event) =>
+                              setAddonIds(
+                                event.target.checked
+                                  ? [...addonIds, addon.id]
+                                  : addonIds.filter((id) => id !== addon.id)
+                              )
+                            }
+                            className="accent-[#e5b342]"
+                          />
+                          <span>{addon.name}</span>
+                        </span>
+                        <span className="text-[#e5b342]">+{money(addon.price)}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </fieldset>
+            )}
+          </div>
+
+          {/* Action Bar */}
+          <div className="mt-10 border-t border-[#2b2721] pt-6">
+            <div className="flex flex-wrap items-center gap-4">
+              {/* Quantity Counter */}
+              <div className="flex items-center rounded border border-[#38332a] bg-[#161412] font-mono">
+                <button
+                  type="button"
+                  className="flex h-11 w-11 items-center justify-center text-[#c4bdae] hover:text-[#e5b342] transition-colors"
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus size={15} />
+                </button>
+                <span className="w-10 text-center font-bold text-sm text-[#f6f1e8]">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  className="flex h-11 w-11 items-center justify-center text-[#c4bdae] hover:text-[#e5b342] transition-colors"
+                  onClick={() => setQuantity(Math.min(20, quantity + 1))}
+                  aria-label="Increase quantity"
+                >
+                  <Plus size={15} />
+                </button>
+              </div>
+
+              {/* Order Button */}
+              <button
+                onClick={add}
+                disabled={!product.id}
+                className="btn flex-1 !py-3 text-sm font-bold uppercase tracking-wider disabled:cursor-not-allowed disabled:bg-[#25221e] disabled:text-[#6e685f]"
+              >
+                {product.id
+                  ? `Add To Cart · ${money(estimate * quantity)}`
+                  : 'Menu Item Unavailable'}
+              </button>
+            </div>
+
+            {cartError && (
+              <p role="alert" className="mt-3 font-mono text-xs text-[#ef8a7d]">
+                {cartError}
+              </p>
+            )}
+
+            <p className="mt-4 font-mono text-[11px] text-[#6e685f]">
+              Estimated price shown. Final receipt, delivery fee, and coupons verified at checkout.
+            </p>
+          </div>
+        </div>
       </div>
     </main>
   );
