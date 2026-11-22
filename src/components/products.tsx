@@ -3,39 +3,24 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, ArrowUpRight, Check, Pause, Play, Plus, UtensilsCrossed } from 'lucide-react';
-import { addCartItem } from '@/lib/cart';
 import { money, Product, productImageUrl } from '@/lib/menu';
 import { useCatalogProducts } from '@/lib/use-catalog-products';
+import { AddToBasketButton } from './add-to-basket';
 
 export function ProductCard({ item }: { item: Product }) {
   const [added, setAdded] = useState(false);
   const [error, setError] = useState('');
+  const imageRef = useRef<HTMLAnchorElement>(null);
   const needsOptions = Boolean(item.variants?.length || item.addons?.length);
-
-  function add() {
-    if (!item.id || needsOptions) return;
-    const result = addCartItem({
-      product_id: item.id,
-      slug: item.slug,
-      name: item.name,
-      price: item.price,
-      qty: 1,
-      image: item.image ?? '',
-      addon_ids: [],
-    });
-    if (!result.ok) {
-      setError(result.error);
-      return;
-    }
-    setError('');
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1200);
-  }
 
   return (
     <article className="product-card-3d group flex h-full flex-col justify-between">
       <div>
-        <Link href={`/menu/${item.slug}`} className="relative block aspect-[1.3] overflow-hidden border-b-[3px] border-[#1c1b2a] bg-[#fbe4cd]">
+        <Link
+          ref={imageRef}
+          href={`/menu/${item.slug}`}
+          className="relative block aspect-[1.3] overflow-hidden border-b-[3px] border-[#1c1b2a] bg-[#fbe4cd]"
+        >
           {item.image ? (
             <img
               src={productImageUrl(item.image)}
@@ -101,16 +86,30 @@ export function ProductCard({ item }: { item: Product }) {
               Choose options
             </Link>
           ) : (
-            <button
-              onClick={add}
+            <AddToBasketButton
+              item={{
+                product_id: item.id,
+                slug: item.slug,
+                name: item.name,
+                price: item.price,
+                qty: 1,
+                image: item.image ?? '',
+                addon_ids: [],
+              }}
+              sourceRef={imageRef}
               disabled={!item.id}
+              ariaLabel={`Add ${item.name} to order`}
+              onAdded={() => {
+                setError('');
+                setAdded(true);
+                setTimeout(() => setAdded(false), 1200);
+              }}
+              onError={setError}
               className={`mono inline-flex items-center gap-1 border-[3px] border-[#1c1b2a] px-3.5 py-2 text-[11px] font-bold uppercase tracking-wider shadow-[3px_3px_0_#1c1b2a] transition-transform enabled:hover:-translate-x-0.5 enabled:hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:bg-[#ded8d5] disabled:text-[#7c747a] disabled:shadow-none ${
                 added
                   ? 'bg-[#7fd1c1] text-[#1c1b2a]'
                   : 'bg-[#ff6b4a] text-[#1c1b2a]'
               }`}
-              aria-label={`Add ${item.name} to order`}
-              title={!item.id ? 'Ordering requires the connected menu' : undefined}
             >
               {added ? (
                 <>
@@ -123,7 +122,7 @@ export function ProductCard({ item }: { item: Product }) {
               ) : (
                 'Unavailable'
               )}
-            </button>
+            </AddToBasketButton>
           )}
         </div>
         {error && <p role="alert" className="mono mt-2 text-xs font-bold text-[#c23348]">{error}</p>}

@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Check, Minus, Plus, UtensilsCrossed } from 'lucide-react';
-import { addCartItem } from '@/lib/cart';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, Minus, Plus, UtensilsCrossed } from 'lucide-react';
 import { money, productImageUrl } from '@/lib/menu';
 import { useCatalogProducts } from '@/lib/use-catalog-products';
+import { AddToBasketButton } from '@/components/add-to-basket';
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -16,6 +16,8 @@ export default function ProductDetail() {
   const [addonIds, setAddonIds] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [cartError, setCartError] = useState('');
+  const [added, setAdded] = useState(false);
+  const imageRef = useRef<HTMLDivElement>(null);
 
   const variants = useMemo(() => product?.variants?.filter((variant) => variant.is_available) ?? [], [product]);
   const addons = useMemo(() => product?.addons?.filter((addon) => addon.is_available) ?? [], [product]);
@@ -27,6 +29,7 @@ export default function ProductDetail() {
     setVariantId(product?.variants?.find((variant) => variant.is_available)?.id ?? '');
     setAddonIds([]);
     setCartError('');
+    setAdded(false);
   }, [product?.id]);
 
   if (!product) {
@@ -50,20 +53,6 @@ export default function ProductDetail() {
 
   function add() {
     if (!product?.id) return;
-    const result = addCartItem({
-      product_id: product.id,
-      ...(selectedVariant ? { variant_id: selectedVariant.id } : {}),
-      addon_ids: addonIds,
-      slug: product.slug,
-      name: `${product.name}${selectedVariant ? ` (${selectedVariant.name})` : ''}${selectedAddons.length ? ` + ${selectedAddons.map((addon) => addon.name).join(', ')}` : ''}`,
-      price: estimate,
-      qty: quantity,
-      image: product.image ?? '',
-    });
-    if (!result.ok) {
-      setCartError(result.error);
-      return;
-    }
     window.location.assign('/cart');
   }
 
@@ -83,7 +72,7 @@ export default function ProductDetail() {
       <div className="grid gap-12 lg:grid-cols-12">
         {/* Left Column: Image or Solid Brand Frame (Zero Gradients) */}
         <div className="lg:col-span-6">
-          <div className="border-[3px] border-[#1c1b2a] shadow-[6px_6px_0_#1c1b2a] bg-[#fff6e9] p-3 ">
+          <div ref={imageRef} className="border-[3px] border-[#1c1b2a] shadow-[6px_6px_0_#1c1b2a] bg-[#fff6e9] p-3 ">
             <div className="relative aspect-square overflow-hidden border-[3px] border-[#1c1b2a] bg-[#fbe4cd]">
               {product.image ? (
                 <img
@@ -251,15 +240,34 @@ export default function ProductDetail() {
               </div>
 
               {/* Order Button */}
-              <button
-                onClick={add}
-                disabled={!product.id}
+              <AddToBasketButton
+                item={{
+                  product_id: product.id,
+                  ...(selectedVariant ? { variant_id: selectedVariant.id } : {}),
+                  addon_ids: addonIds,
+                  slug: product.slug,
+                  name: `${product.name}${selectedVariant ? ` (${selectedVariant.name})` : ''}${selectedAddons.length ? ` + ${selectedAddons.map((addon) => addon.name).join(', ')}` : ''}`,
+                  price: estimate,
+                  qty: quantity,
+                  image: product.image ?? '',
+                }}
+                sourceRef={imageRef}
+                disabled={!product.id || added}
+                ariaLabel={`Add ${product.name} to cart`}
+                onAdded={() => {
+                  setCartError('');
+                  setAdded(true);
+                }}
+                onError={setCartError}
+                onFlightEnd={add}
                 className="btn flex-1 !py-3 text-sm font-bold uppercase tracking-wider disabled:cursor-not-allowed disabled:bg-[#ded8d5] disabled:text-[#7c747a]"
               >
-                {product.id
-                  ? `Add To Cart · ${money(estimate * quantity)}`
-                  : 'Menu Item Unavailable'}
-              </button>
+                {!product.id
+                  ? 'Menu Item Unavailable'
+                  : added
+                    ? 'Added to cart · Heading over…'
+                    : `Add To Cart · ${money(estimate * quantity)}`}
+              </AddToBasketButton>
             </div>
 
             {cartError && (

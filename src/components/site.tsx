@@ -109,10 +109,13 @@ export function SiteHeader() {
         <div className="flex items-center gap-3">
           <Link
             href="/cart"
+            data-cart-target
             className="relative flex h-11 w-11 items-center justify-center border-[3px] border-[#1c1b2a] bg-[#fffcf5] text-[#1c1b2a] shadow-[3px_3px_0_#1c1b2a] transition-transform hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-[#ffc857]"
             aria-label={`Cart with ${count} items`}
           >
-            <ShoppingBag size={19} />
+            <span data-cart-icon className="flex">
+              <ShoppingBag size={19} />
+            </span>
             {count > 0 && (
               <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center border-2 border-[#1c1b2a] bg-[#ff6b4a] px-1 font-mono text-[10px] font-bold text-[#1c1b2a]">
                 {count}
